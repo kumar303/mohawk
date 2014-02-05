@@ -9,22 +9,22 @@ import pprint
 import re
 import time
 
-from .exc import BadHeaderValue, HawkFail, InvalidConfig
+from .exc import BadHeaderValue, HawkFail, InvalidCredentials
 
 
 HAWK_VER = 1
 log = logging.getLogger(__name__)
 
 
-def validate_config(conf):
-    if not isinstance(conf, dict):
-        raise InvalidConfig('config must be a dict')
+def validate_credentials(creds):
+    if not isinstance(creds, dict):
+        raise InvalidCredentials('credentials must be a dict')
     try:
-        conf['id']
-        conf['key']
-        conf['algorithm']
+        creds['id']
+        creds['key']
+        creds['algorithm']
     except KeyError, exc:
-        raise InvalidConfig('{0.__class__.__name__}: {0}'.format(exc))
+        raise InvalidCredentials('{0.__class__.__name__}: {0}'.format(exc))
 
 
 def random_string(length):
@@ -60,8 +60,8 @@ def calculate_mac(mac_type, resource):
     normalized = normalize_string(mac_type, resource)
     log.debug('normalized resource for mac calc: {norm}'
               .format(norm=normalized))
-    digestmod = getattr(hashlib, resource.config['algorithm'])
-    result = hmac.new(resource.config['key'], normalized, digestmod)
+    digestmod = getattr(hashlib, resource.credentials['algorithm'])
+    result = hmac.new(resource.credentials['key'], normalized, digestmod)
     return urlsafe_b64encode(result.digest())
 
 
@@ -157,10 +157,10 @@ def parse_authorization_header(auth_header):
 def strings_match(a, b):
     # Constant time string comparision, mitigates side channel attacks.
     if len(a) != len(b):
-      return False
+        return False
     result = 0
     for x, y in zip(a, b):
-      result |= ord(x) ^ ord(y)
+        result |= ord(x) ^ ord(y)
     return result == 0
 
 

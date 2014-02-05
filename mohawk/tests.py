@@ -5,71 +5,71 @@ from nose.tools import eq_
 from . import Client, Server
 from .exc import (AlreadyProcessed,
                   BadHeaderValue,
-                  ConfigLookupError,
-                  InvalidConfig,
+                  CredentialsLookupError,
+                  InvalidCredentials,
                   MacMismatch,
                   MisComputedContentHash,
                   TokenExpired)
 from .util import (parse_authorization_header,
                    utc_now,
-                   validate_config)
+                   validate_credentials)
 
 
 class Base(TestCase):
 
     def setUp(self):
-        self.config = {
+        self.credentials = {
             'id': 'my-hawk-id',
             'key': 'my hAwK sekret',
             'algorithm': 'sha256',
         }
-        self._config_lookup_callable = None
+        self._credentials_lookup_callable = None
 
         # This callable might be replaced by tests.
         def seen_nonce(nonce, ts):
             return False
         self._seen_nonce = seen_nonce
 
-        self.client = Client(self.config,
+        self.client = Client(self.credentials,
                              seen_nonce=lambda *a: self._seen_nonce(*a))
-        self.server = Server(self.config_lookup,
+        self.server = Server(self.credentials_lookup,
                              seen_nonce=lambda *a: self._seen_nonce(*a))
 
-    def config_lookup(self, id):
-        if self._config_lookup_callable:
-            return self._config_lookup_callable(id)
+    def credentials_lookup(self, id):
+        if self._credentials_lookup_callable:
+            return self._credentials_lookup_callable(id)
 
         # Pretend this is doing something more interesting like looking up
-        # a config by ID in a database.
-        if self.config['id'] != id:
-            raise LookupError('No configuration for Hawk ID {id}'
+        # a credentials by ID in a database.
+        if self.credentials['id'] != id:
+            raise LookupError('No credentialsuration for Hawk ID {id}'
                               .format(id=id))
-        return self.config
+        return self.credentials
 
 
 class TestConfig(Base):
 
     def test_no_id(self):
-        c = self.config.copy()
+        c = self.credentials.copy()
         del c['id']
-        with self.assertRaises(InvalidConfig):
-            validate_config(c)
+        with self.assertRaises(InvalidCredentials):
+            validate_credentials(c)
 
     def test_no_key(self):
-        c = self.config.copy()
+        c = self.credentials.copy()
         del c['key']
-        with self.assertRaises(InvalidConfig):
-            validate_config(c)
+        with self.assertRaises(InvalidCredentials):
+            validate_credentials(c)
 
     def test_no_algo(self):
-        c = self.config.copy()
+        c = self.credentials.copy()
         del c['algorithm']
-        with self.assertRaises(InvalidConfig):
-            validate_config(c)
+        with self.assertRaises(InvalidCredentials):
+            validate_credentials(c)
 
-    def test_no_config(self):
-        with self.assertRaises(InvalidConfig):
-            validate_config(None)
+    def test_no_credentials(self):
+        with self.assertRaises(InvalidCredentials):
+            validate_credentials(None)
 
 
 class TestClient(Base):
@@ -79,9 +79,9 @@ class TestClient(Base):
         self.url = 'http://site.com/foo?bar=1'
 
     def header(self, method='GET', **kw):
-        config = kw.pop('config', None)
-        if config:
-            self.client.reconfigure(config)
+        credentials = kw.pop('credentials', None)
+        if credentials:
+            self.client.reconfigure(credentials)
         return self.client.header(self.url, method, **kw)['header']
 
     def authenticate(self, header, url=None, method='GET', **kw):
@@ -109,9 +109,9 @@ class TestClient(Base):
         content = '{"bar": "foobs"}'
         content_type = 'application/json'
         header = self.header(method=method, content=content,
-                                  content_type=content_type)
+                             content_type=content_type)
         self.authenticate(header, method=method, content=content,
-                      content_type=content_type)
+                          content_type=content_type)
 
     def test_tamper_with_host(self):
         header = self.header()
@@ -189,33 +189,33 @@ class TestClient(Base):
             'key': 'INCORRECT; YOU FAIL',
             'algorithm': 'sha256',
         }
-        header = self.header(config=cfg)
+        header = self.header(credentials=cfg)
         with self.assertRaises(MacMismatch):
             self.authenticate(header)
 
     def test_unexpected_algorithm(self):
-        cfg = self.config.copy()
+        cfg = self.credentials.copy()
         cfg['algorithm'] = 'sha512'
-        header = self.header(config=cfg)
+        header = self.header(credentials=cfg)
 
         with self.assertRaises(MacMismatch):
-            # Validate with a config using sha256.
+            # Validate with a credentials using sha256.
             self.authenticate(header)
 
-    def test_invalid_config(self):
-        cfg = self.config.copy()
-        # Create an invalid config.
+    def test_invalid_credentials(self):
+        cfg = self.credentials.copy()
+        # Create an invalid credentials.
         del cfg['algorithm']
 
-        with self.assertRaises(InvalidConfig):
-            self.header(config=cfg)
+        with self.assertRaises(InvalidCredentials):
+            self.header(credentials=cfg)
 
     def test_unknown_id(self):
-        cfg = self.config.copy()
+        cfg = self.credentials.copy()
         cfg['id'] = 'someone-else'
-        header = self.header(config=cfg)
+        header = self.header(credentials=cfg)
 
-        with self.assertRaises(ConfigLookupError):
+        with self.assertRaises(CredentialsLookupError):
             self.authenticate(header)
 
     def test_bad_ext(self):
@@ -293,16 +293,16 @@ class TestServer(Base):
         return self.server.header(**kw)
 
     def authenticate(self, header, **kw):
-        config = kw.pop('config', None)
-        if config:
-            self.client.reconfigure(config)
+        credentials = kw.pop('credentials', None)
+        if credentials:
+            self.client.recredentialsure(credentials)
         self.client.authenticate(header, **kw)
 
-    def test_invalid_config_lookup(self):
-        # Return an invalid config.
-        self._config_lookup_callable = lambda *a: {}
+    def test_invalid_credentials_lookup(self):
+        # Return an invalid credentials.
+        self._credentials_lookup_callable = lambda *a: {}
 
-        with self.assertRaises(InvalidConfig):
+        with self.assertRaises(InvalidCredentials):
             self.receive_request()
 
     def test_get_ok(self):
@@ -330,7 +330,7 @@ class TestServer(Base):
     def test_pass_a_trusted_request(self):
         method = 'POST'
         header = self.client.header(url=self.url, method=method)['header']
-        serv = Server(self.config_lookup)
+        serv = Server(self.credentials_lookup)
         serv.authenticate(url=self.url, method=method, header=header)
 
         header = self.outgoing_header(trusted_request=serv.trusted_request)
@@ -368,7 +368,7 @@ class TestServer(Base):
 class TestClientAndServer(Base):
 
     def test_integration(self):
-        config = {
+        credentials = {
             'id': 'some-id',
             'key': 'some secret',
             'algorithm': 'sha256'
@@ -377,8 +377,8 @@ class TestClientAndServer(Base):
         url = 'https://my-site.com/'
         method = 'POST'
 
-        client = Client(config)
-        server = Server(lambda *a: config)
+        client = Client(credentials)
+        server = Server(lambda *a: credentials)
 
         # The client makes a request with a Hawk header.
         content = 'foo=bar&baz=nooz'

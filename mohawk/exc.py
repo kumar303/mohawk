@@ -3,7 +3,7 @@ class HawkFail(Exception):
     pass
 
 
-class InvalidConfig(HawkFail):
+class InvalidCredentials(HawkFail):
     pass
 
 
@@ -31,5 +31,5 @@ class BadHeaderValue(HawkFail):
     pass
 
 
-class ConfigLookupError(HawkFail):
+class CredentialsLookupError(HawkFail):
     pass

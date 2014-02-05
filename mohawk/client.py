@@ -1,7 +1,9 @@
 import logging
 
 from .base import HawkAuthority, Resource
-from .util import calculate_mac, parse_authorization_header, validate_config
+from .util import (calculate_mac,
+                   parse_authorization_header,
+                   validate_credentials)
 
 __all__ = ['Client']
 log = logging.getLogger(__name__)
@@ -9,14 +11,14 @@ log = logging.getLogger(__name__)
 
 class Client(HawkAuthority):
 
-    def __init__(self, config, seen_nonce=None):
-        self.reconfigure(config)
+    def __init__(self, credentials, seen_nonce=None):
+        self.reconfigure(credentials)
         self.request_header = None
         self.seen_nonce = seen_nonce
 
-    def reconfigure(self, config):
-        validate_config(config)
-        self.config = config
+    def reconfigure(self, credentials):
+        validate_credentials(credentials)
+        self.credentials = credentials
 
     def authenticate(self,
                      response_header,
@@ -30,8 +32,8 @@ class Client(HawkAuthority):
             self.request_header = request_header
         if not self.request_header:
             raise NotImplementedError(
-                    'cannot authenticate a response header without first '
-                    'generating a request header')
+                'cannot authenticate a response header without first '
+                'generating a request header')
 
         parsed_header = parse_authorization_header(response_header)
 
@@ -40,7 +42,7 @@ class Client(HawkAuthority):
                             ext=parsed_header.get('ext', None),
                             app=parsed_header.get('app', None),
                             dlg=parsed_header.get('dlg', None),
-                            config=self.config,
+                            credentials=self.credentials,
                             nonce=parsed_header['nonce'],
                             seen_nonce=self.seen_nonce,
                             content=content,
@@ -67,7 +69,7 @@ class Client(HawkAuthority):
         """
         log.debug('generating request header')
         resource = Resource(url=url,
-                            config=self.config,
+                            credentials=self.credentials,
                             ext=ext,
                             app=app,
                             dlg=dlg,

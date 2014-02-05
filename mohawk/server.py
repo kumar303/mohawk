@@ -1,18 +1,18 @@
 import logging
 
 from .base import HawkAuthority, Resource
-from .exc import ConfigLookupError
+from .exc import CredentialsLookupError
 from .util import (calculate_mac,
                    parse_authorization_header,
-                   validate_config)
+                   validate_credentials)
 
 log = logging.getLogger(__name__)
 
 
 class Server(HawkAuthority):
 
-    def __init__(self, config_map, seen_nonce=None):
-        self.config_map = config_map
+    def __init__(self, credentials_map, seen_nonce=None):
+        self.credentials_map = credentials_map
         self.trusted_request = None
         self.seen_nonce = seen_nonce
 
@@ -28,19 +28,20 @@ class Server(HawkAuthority):
         parsed_header = parse_authorization_header(header)
 
         try:
-            credentials = self.config_map(parsed_header['id'])
+            credentials = self.credentials_map(parsed_header['id'])
         except LookupError, exc:
             log.debug('Catching {0.__class__.__name__}: {0}'.format(exc))
-            raise ConfigLookupError('Could not find credentials for ID {0}'
-                                    .format(parsed_header['id']))
-        validate_config(credentials)
+            raise CredentialsLookupError(
+                'Could not find credentials for ID {0}'
+                .format(parsed_header['id']))
+        validate_credentials(credentials)
 
         resource = Resource(url=url,
                             method=method,
                             ext=parsed_header.get('ext', None),
                             app=parsed_header.get('app', None),
                             dlg=parsed_header.get('dlg', None),
-                            config=credentials,
+                            credentials=credentials,
                             nonce=parsed_header['nonce'],
                             seen_nonce=self.seen_nonce,
                             content=content,
@@ -66,14 +67,14 @@ class Server(HawkAuthority):
             self.trusted_request = trusted_request
         if not self.trusted_request:
             raise NotImplementedError(
-                    'cannot build a response header without having already '
-                    'authenticated an incoming request. This can be fixed by '
-                    'adding some extra parameters')
+                'cannot build a response header without having already '
+                'authenticated an incoming request. This can be fixed by '
+                'adding some extra parameters')
 
         trusted = self.trusted_request
 
         resource = Resource(url=trusted['resource'].url,
-                            config=trusted['resource'].config,
+                            credentials=trusted['resource'].credentials,
                             ext=trusted['header'].get('ext', None),
                             app=trusted['header'].get('app', None),
                             dlg=trusted['header'].get('dlg', None),

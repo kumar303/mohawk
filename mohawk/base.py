@@ -32,7 +32,7 @@ class HawkAuthority:
         # TODO: if content is empty should we be less strict and allow
         # an empty hash attribute in the header?
         p_hash = calculate_payload_hash(resource.content,
-                                        resource.config['algorithm'],
+                                        resource.credentials['algorithm'],
                                         resource.content_type)
         if not strings_match(p_hash, parsed_header['hash']):
             # The hash declared in the header is incorrect.
@@ -42,11 +42,11 @@ class HawkAuthority:
             log.debug('mismatched content-type: {typ}'
                       .format(typ=repr(resource.content_type)))
             raise MisComputedContentHash(
-                    'Our hash {ours} ({algo}) did not '
-                    'match theirs {theirs}'
-                    .format(ours=p_hash,
-                            theirs=parsed_header['hash'],
-                            algo=resource.config['algorithm']))
+                'Our hash {ours} ({algo}) did not '
+                'match theirs {theirs}'
+                .format(ours=p_hash,
+                        theirs=parsed_header['hash'],
+                        algo=resource.credentials['algorithm']))
 
         if resource.seen_nonce:
             if resource.seen_nonce(parsed_header['nonce'],
@@ -72,7 +72,7 @@ class HawkAuthority:
         header = (
             u'Hawk id="{id}", ts="{ts}", nonce="{nonce}", '
             u'hash="{hash}", mac="{mac}"'
-        ).format(id=prepare_header_val(resource.config['id']),
+        ).format(id=prepare_header_val(resource.credentials['id']),
                  ts=prepare_header_val(resource.timestamp),
                  nonce=prepare_header_val(resource.nonce),
                  hash=prepare_header_val(resource.content_hash),
@@ -80,15 +80,15 @@ class HawkAuthority:
 
         if resource.ext:
             header = u'{header}, ext="{ext}"'.format(
-                        header=header, ext=prepare_header_val(resource.ext))
+                header=header, ext=prepare_header_val(resource.ext))
 
         if resource.app:
             header = u'{header}, app="{app}"'.format(
-                        header=header, app=prepare_header_val(resource.app))
+                header=header, app=prepare_header_val(resource.app))
 
         if resource.dlg:
             header = u'{header}, dlg="{dlg}"'.format(
-                        header=header, dlg=prepare_header_val(resource.dlg))
+                header=header, dlg=prepare_header_val(resource.dlg))
 
         # Use UTF8 for sanity even though the validator (currently)
         # rejects non-ascii.
@@ -106,7 +106,7 @@ class Resource:
     """
 
     def __init__(self, **kw):
-        self.config = kw.pop('config')  # Hawk credentials.
+        self.credentials = kw.pop('credentials')
         self.method = kw.pop('method').upper()
         self.content = kw.pop('content')
         self.content_type = kw.pop('content_type')
@@ -115,7 +115,8 @@ class Resource:
         self.dlg = kw.pop('dlg', None)
 
         self.content_hash = calculate_payload_hash(
-           self.content, self.config['algorithm'], self.content_type)
+            self.content, self.credentials['algorithm'],
+            self.content_type)
 
         self.timestamp = str(kw.pop('timestamp', None) or utc_now())
 
