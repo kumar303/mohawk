@@ -14,7 +14,7 @@ class Receiver(HawkAuthority):
 
     def __init__(self,
                  credentials_map,
-                 header,
+                 request_header,
                  url,
                  method,
                  content='',
@@ -26,9 +26,9 @@ class Receiver(HawkAuthority):
         self.credentials_map = credentials_map
         self.seen_nonce = seen_nonce
 
-        log.debug('authenticating {header}'.format(header=header))
+        log.debug('accepting request {header}'.format(header=request_header))
 
-        parsed_header = parse_authorization_header(header)
+        parsed_header = parse_authorization_header(request_header)
 
         try:
             credentials = self.credentials_map(parsed_header['id'])

@@ -48,7 +48,8 @@ class Sender(HawkAuthority):
                         content='',
                         content_type='text/plain',
                         **auth_kw):
-        log.debug('authenticating {header}'.format(header=response_header))
+        log.debug('accepting response {header}'
+                  .format(header=response_header))
 
         parsed_header = parse_authorization_header(response_header)
 
