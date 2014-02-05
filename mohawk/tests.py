@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from nose.tools import eq_
 
-from . import Client, Server
+from . import Receiver, Sender
 from .exc import (AlreadyProcessed,
                   BadHeaderValue,
                   CredentialsLookupError,
@@ -23,22 +23,13 @@ class Base(TestCase):
             'key': 'my hAwK sekret',
             'algorithm': 'sha256',
         }
-        self._credentials_lookup_callable = None
 
         # This callable might be replaced by tests.
         def seen_nonce(nonce, ts):
             return False
-        self._seen_nonce = seen_nonce
+        self.seen_nonce = seen_nonce
 
-        self.client = Client(self.credentials,
-                             seen_nonce=lambda *a: self._seen_nonce(*a))
-        self.server = Server(self.credentials_lookup,
-                             seen_nonce=lambda *a: self._seen_nonce(*a))
-
-    def credentials_lookup(self, id):
-        if self._credentials_lookup_callable:
-            return self._credentials_lookup_callable(id)
-
+    def credentials_map(self, id):
         # Pretend this is doing something more interesting like looking up
         # a credentials by ID in a database.
         if self.credentials['id'] != id:
@@ -72,116 +63,120 @@ class TestConfig(Base):
             validate_credentials(None)
 
 
-class TestClient(Base):
+class TestSender(Base):
 
     def setUp(self):
-        super(TestClient, self).setUp()
+        super(TestSender, self).setUp()
         self.url = 'http://site.com/foo?bar=1'
 
-    def header(self, method='GET', **kw):
-        credentials = kw.pop('credentials', None)
-        if credentials:
-            self.client.reconfigure(credentials)
-        return self.client.header(self.url, method, **kw)['header']
+    def Sender(self, method='GET', **kw):
+        credentials = kw.pop('credentials', self.credentials)
+        sender = Sender(credentials, self.url, method, **kw)
+        return sender
 
-    def authenticate(self, header, url=None, method='GET', **kw):
-        self.server.authenticate(header, url or self.url, method,
-                                 **kw)
+    def receive(self, request_header, url=None, method='GET', **kw):
+        credentials_map = kw.pop('credentials_map', self.credentials_map)
+        kw.setdefault('seen_nonce', self.seen_nonce)
+        return Receiver(credentials_map, request_header,
+                        url or self.url, method, **kw)
 
     def test_get_ok(self):
         method = 'GET'
-        header = self.header(method=method)
-        self.authenticate(header, method=method)
+        sn = self.Sender(method=method)
+        self.receive(sn.request_header, method=method)
 
     def test_post_ok(self):
         method = 'POST'
-        header = self.header(method=method)
-        self.authenticate(header, method=method)
+        sn = self.Sender(method=method)
+        self.receive(sn.request_header, method=method)
 
     def test_post_content_ok(self):
         method = 'POST'
         content = 'foo=bar&baz=2'
-        header = self.header(method=method, content=content)
-        self.authenticate(header, method=method, content=content)
+        sn = self.Sender(method=method, content=content)
+        self.receive(sn.request_header, method=method, content=content)
 
     def test_post_content_type_ok(self):
         method = 'POST'
         content = '{"bar": "foobs"}'
         content_type = 'application/json'
-        header = self.header(method=method, content=content,
-                             content_type=content_type)
-        self.authenticate(header, method=method, content=content,
-                          content_type=content_type)
+        sn = self.Sender(method=method, content=content,
+                         content_type=content_type)
+        self.receive(sn.request_header, method=method, content=content,
+                     content_type=content_type)
 
     def test_tamper_with_host(self):
-        header = self.header()
+        sn = self.Sender()
         with self.assertRaises(MacMismatch):
-            self.authenticate(header, url='http://TAMPERED-WITH.com')
+            self.receive(sn.request_header, url='http://TAMPERED-WITH.com')
 
     def test_tamper_with_method(self):
-        header = self.header(method='GET')
+        sn = self.Sender(method='GET')
         with self.assertRaises(MacMismatch):
-            self.authenticate(header, method='POST')
+            self.receive(sn.request_header, method='POST')
 
     def test_tamper_with_path(self):
-        header = self.header()
+        sn = self.Sender()
         with self.assertRaises(MacMismatch):
-            self.authenticate(header, url='http://site.com/TAMPERED?bar=1')
+            self.receive(sn.request_header,
+                         url='http://site.com/TAMPERED?bar=1')
 
     def test_tamper_with_query(self):
-        header = self.header()
+        sn = self.Sender()
         with self.assertRaises(MacMismatch):
-            self.authenticate(header, url='http://site.com/foo?bar=TAMPERED')
+            self.receive(sn.request_header,
+                         url='http://site.com/foo?bar=TAMPERED')
 
     def test_tamper_with_scheme(self):
-        header = self.header()
+        sn = self.Sender()
         with self.assertRaises(MacMismatch):
-            self.authenticate(header, url='https://site.com/foo?bar=1')
+            self.receive(sn.request_header, url='https://site.com/foo?bar=1')
 
     def test_tamper_with_port(self):
-        header = self.header()
+        sn = self.Sender()
         with self.assertRaises(MacMismatch):
-            self.authenticate(header, url='http://site.com:8000/foo?bar=1')
+            self.receive(sn.request_header,
+                         url='http://site.com:8000/foo?bar=1')
 
     def test_tamper_with_content(self):
-        header = self.header(method='POST')
+        sn = self.Sender(method='POST')
         with self.assertRaises(MacMismatch):
-            self.authenticate(header, content='stuff=nope')
+            self.receive(sn.request_header, content='stuff=nope')
 
     def test_tamper_with_content_type(self):
-        header = self.header(method='POST')
+        sn = self.Sender(method='POST')
         with self.assertRaises(MacMismatch):
-            self.authenticate(header, content_type='application/json')
+            self.receive(sn.request_header, content_type='application/json')
 
     def test_nonce_fail(self):
-        header = self.header()
 
         def seen_nonce(nonce, ts):
             return True
-        self._seen_nonce = seen_nonce
+
+        sn = self.Sender()
 
         with self.assertRaises(AlreadyProcessed):
-            self.authenticate(header)
+            self.receive(sn.request_header,
+                         seen_nonce=seen_nonce)
 
     def test_nonce_ok(self):
-        header = self.header()
 
         def seen_nonce(nonce, ts):
             return False
-        self._seen_nonce = seen_nonce
 
-        self.authenticate(header)
+        sn = self.Sender(seen_nonce=seen_nonce)
+        self.receive(sn.request_header)
 
     def test_expired_ts(self):
-        header = self.header(_timestamp=utc_now() - 120)
+        sn = self.Sender(_timestamp=utc_now() - 120)
         with self.assertRaises(TokenExpired):
-            self.authenticate(header)
+            self.receive(sn.request_header)
 
     def test_hash_tampering(self):
-        header = self.header()
-        header = header.replace('hash="', 'hash="nope')
+        sn = self.Sender()
+        header = sn.request_header.replace('hash="', 'hash="nope')
         with self.assertRaises(MisComputedContentHash):
-            self.authenticate(header)
+            self.receive(header)
 
     def test_bad_secret(self):
         cfg = {
@@ -189,18 +184,18 @@ class TestClient(Base):
             'key': 'INCORRECT; YOU FAIL',
             'algorithm': 'sha256',
         }
-        header = self.header(credentials=cfg)
+        sn = self.Sender(credentials=cfg)
         with self.assertRaises(MacMismatch):
-            self.authenticate(header)
+            self.receive(sn.request_header)
 
     def test_unexpected_algorithm(self):
-        cfg = self.credentials.copy()
-        cfg['algorithm'] = 'sha512'
-        header = self.header(credentials=cfg)
+        cr = self.credentials.copy()
+        cr['algorithm'] = 'sha512'
+        sn = self.Sender(credentials=cr)
 
         with self.assertRaises(MacMismatch):
             # Validate with a credentials using sha256.
-            self.authenticate(header)
+            self.receive(sn.request_header)
 
     def test_invalid_credentials(self):
         cfg = self.credentials.copy()
@@ -208,89 +203,111 @@ class TestClient(Base):
         del cfg['algorithm']
 
         with self.assertRaises(InvalidCredentials):
-            self.header(credentials=cfg)
+            self.Sender(credentials=cfg)
 
     def test_unknown_id(self):
-        cfg = self.credentials.copy()
-        cfg['id'] = 'someone-else'
-        header = self.header(credentials=cfg)
+        cr = self.credentials.copy()
+        cr['id'] = 'someone-else'
+        sn = self.Sender(credentials=cr)
 
         with self.assertRaises(CredentialsLookupError):
-            self.authenticate(header)
+            self.receive(sn.request_header)
 
     def test_bad_ext(self):
-        header = self.header(ext='my external data')
+        sn = self.Sender(ext='my external data')
 
-        header = header.replace('my external data', 'TAMPERED')
+        header = sn.request_header.replace('my external data', 'TAMPERED')
         with self.assertRaises(MacMismatch):
-            self.authenticate(header)
+            self.receive(header)
 
     def test_ext_with_quotes(self):
-        header = self.header(ext='quotes=""')
-        self.authenticate(header)
-        parsed = parse_authorization_header(header)
+        sn = self.Sender(ext='quotes=""')
+        self.receive(sn.request_header)
+        parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['ext'], 'quotes=""')
 
     def test_ext_with_new_line(self):
-        header = self.header(ext="new line \n in the middle")
-        self.authenticate(header)
-        parsed = parse_authorization_header(header)
+        sn = self.Sender(ext="new line \n in the middle")
+        self.receive(sn.request_header)
+        parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['ext'], "new line \n in the middle")
 
     def test_ext_with_illegal_chars(self):
         with self.assertRaises(BadHeaderValue):
-            self.header(ext="something like \t is illegal")
+            self.Sender(ext="something like \t is illegal")
 
     def test_ext_with_illegal_unicode(self):
         with self.assertRaises(BadHeaderValue):
-            self.header(ext=u'Ivan Kristi\u0107')
+            self.Sender(ext=u'Ivan Kristi\u0107')
 
     def test_ext_with_illegal_utf8(self):
         with self.assertRaises(BadHeaderValue):
-            self.header(ext=u'Ivan Kristi\u0107'.encode('utf8'))
+            self.Sender(ext=u'Ivan Kristi\u0107'.encode('utf8'))
 
     def test_app_ok(self):
         app = 'custom-app'
-        header = self.header(app=app)
-        self.authenticate(header)
-        parsed = parse_authorization_header(header)
+        sn = self.Sender(app=app)
+        self.receive(sn.request_header)
+        parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['app'], app)
 
     def test_tampered_app(self):
         app = 'custom-app'
-        header = self.header(app=app)
-        header = header.replace(app, 'TAMPERED-WITH')
+        sn = self.Sender(app=app)
+        header = sn.request_header.replace(app, 'TAMPERED-WITH')
         with self.assertRaises(MacMismatch):
-            self.authenticate(header)
+            self.receive(header)
 
     def test_dlg_ok(self):
         dlg = 'custom-dlg'
-        header = self.header(dlg=dlg)
-        self.authenticate(header)
-        parsed = parse_authorization_header(header)
+        sn = self.Sender(dlg=dlg)
+        self.receive(sn.request_header)
+        parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['dlg'], dlg)
 
     def test_tampered_dlg(self):
         dlg = 'custom-dlg'
-        header = self.header(dlg=dlg, app='some-app')
-        header = header.replace(dlg, 'TAMPERED-WITH')
+        sn = self.Sender(dlg=dlg, app='some-app')
+        header = sn.request_header.replace(dlg, 'TAMPERED-WITH')
         with self.assertRaises(MacMismatch):
-            self.authenticate(header)
+            self.receive(header)
 
 
-class TestServer(Base):
+class TestReceiver(Base):
 
     def setUp(self):
-        super(TestServer, self).setUp()
+        super(TestReceiver, self).setUp()
         self.url = 'http://site.com/'
+        self.sender = None
+        self.receiver = None
 
-    def receive_request(self, method='GET', **kw):
+    def receive(self, method='GET', **kw):
         url = kw.pop('url', self.url)
-        header = self.client.header(url, method, **kw)['header']
-        self.server.authenticate(header, url, method)
+        sender = kw.pop('sender', None)
+        sender_kw = kw.pop('sender_kw', {})
+        sender_url = kw.pop('sender_url', url)
 
-    def outgoing_header(self, **kw):
-        return self.server.header(**kw)
+        credentials_map = kw.pop('credentials_map',
+                                 lambda id: self.credentials)
+
+        if sender:
+            self.sender = sender
+        else:
+            self.sender = Sender(self.credentials, sender_url, method,
+                                 **sender_kw)
+
+        self.receiver = Receiver(credentials_map,
+                                 self.sender.request_header, url, method,
+                                 **kw)
+
+    def respond(self, **kw):
+        accept_kw = kw.pop('accept_kw', {})
+        receiver = kw.pop('receiver', self.receiver)
+
+        receiver.respond(**kw)
+        self.sender.accept_response(receiver.response_header, **accept_kw)
+
+        return receiver.response_header
 
     def authenticate(self, header, **kw):
         credentials = kw.pop('credentials', None)
@@ -299,75 +316,88 @@ class TestServer(Base):
         self.client.authenticate(header, **kw)
 
     def test_invalid_credentials_lookup(self):
-        # Return an invalid credentials.
-        self._credentials_lookup_callable = lambda *a: {}
-
         with self.assertRaises(InvalidCredentials):
-            self.receive_request()
+            # Return invalid credentials.
+            self.receive(credentials_map=lambda *a: {})
 
     def test_get_ok(self):
         method = 'GET'
-        self.receive_request(method=method)
-        header = self.outgoing_header()
-        self.authenticate(header)
+        self.receive(method=method)
+        self.respond()
 
     def test_post_ok(self):
         method = 'POST'
-        self.receive_request(method=method)
-        header = self.outgoing_header()
-        self.authenticate(header)
+        self.receive(method=method)
+        self.respond()
 
-    def test_wrong_method(self):
-        self.receive_request(method='GET')
-        bad_header = self.outgoing_header()
+    def test_respond_with_wrong_content(self):
+        self.receive()
+        with self.assertRaises(MacMismatch):
+            self.respond(content='real content',
+                         accept_kw=dict(content='TAMPERED WITH'))
 
-        # Reset header cache.
-        self.receive_request(method='POST')
+    def test_respond_with_wrong_content_type(self):
+        self.receive()
+        with self.assertRaises(MacMismatch):
+            self.respond(content_type='text/html',
+                         accept_kw=dict(content_type='application/json'))
+
+    def test_respond_with_wrong_url(self):
+        self.receive(url='http://fakesite.com')
+        wrong_receiver = self.receiver
+
+        self.receive(url='http://realsite.com')
 
         with self.assertRaises(MacMismatch):
-            self.authenticate(bad_header)
+            self.respond(receiver=wrong_receiver)
 
-    def test_pass_a_trusted_request(self):
-        method = 'POST'
-        header = self.client.header(url=self.url, method=method)['header']
-        serv = Server(self.credentials_lookup)
-        serv.authenticate(url=self.url, method=method, header=header)
+    def test_respond_with_wrong_method(self):
+        self.receive(method='GET')
+        wrong_receiver = self.receiver
 
-        header = self.outgoing_header(trusted_request=serv.trusted_request)
-        self.authenticate(header)
-
-    def test_require_incoming_header(self):
-        with self.assertRaises(NotImplementedError):
-            self.outgoing_header()
-
-    def test_content_tampering(self):
-        self.receive_request()
-        header = self.outgoing_header(content='real content')
+        self.receive(method='POST')
 
         with self.assertRaises(MacMismatch):
-            self.authenticate(header, content='TAMPERED WITH')
+            self.respond(receiver=wrong_receiver)
 
-    def test_content_type_tampering(self):
-        self.receive_request()
-        header = self.outgoing_header(content_type='text/html')
-
-        with self.assertRaises(MacMismatch):
-            self.authenticate(header, content_type='application/json')
-
-    def test_url_does_not_match_request(self):
-        self.receive_request(url='http://fakesite.com/')
-        bad_header = self.outgoing_header()
-
-        # Reset header cache.
-        self.receive_request(url='http://realsite.com/')
+    def test_receive_wrong_method(self):
+        self.receive(method='GET')
+        wrong_sender = self.sender
 
         with self.assertRaises(MacMismatch):
-            self.authenticate(bad_header)
+            self.receive(method='POST',
+                         sender=wrong_sender)
+
+    def test_receive_wrong_url(self):
+        self.receive(url='http://fakesite.com/')
+        wrong_sender = self.sender
+
+        with self.assertRaises(MacMismatch):
+            self.receive(url='http://realsite.com/',
+                         sender=wrong_sender)
+
+    def test_receive_wrong_content(self):
+        self.receive(sender_kw=dict(content='real request'),
+                     content='real request')
+        wrong_sender = self.sender
+
+        with self.assertRaises(MacMismatch):
+            self.receive(content='TAMPERED WITH',
+                         sender=wrong_sender)
+
+    def test_receive_wrong_content_type(self):
+        self.receive(sender_kw=dict(content_type='text/html'),
+                     content_type='text/html')
+        wrong_sender = self.sender
+
+        with self.assertRaises(MacMismatch):
+            self.receive(content_type='application/json',
+                         sender=wrong_sender)
 
 
-class TestClientAndServer(Base):
+class TestSendAndReceive(Base):
 
-    def test_integration(self):
+    def test(self):
         credentials = {
             'id': 'some-id',
             'key': 'some secret',
@@ -377,28 +407,29 @@ class TestClientAndServer(Base):
         url = 'https://my-site.com/'
         method = 'POST'
 
-        client = Client(credentials)
-        server = Server(lambda *a: credentials)
-
-        # The client makes a request with a Hawk header.
+        # The client sends a request with a Hawk header.
         content = 'foo=bar&baz=nooz'
         content_type = 'application/x-www-form-urlencoded'
-        request_hdr = client.header(url, method,
-                                    content=content,
-                                    content_type=content_type)
+
+        sender = Sender(credentials,
+                        url, method,
+                        content=content,
+                        content_type=content_type)
 
         # The server receives and authenticates the response.
-        server.authenticate(request_hdr['header'], url, method,
+        receiver = Receiver(lambda id: credentials,
+                            sender.request_header,
+                            url, method,
                             content=content,
                             content_type=content_type)
 
         # The server responds with a similar Hawk header.
         content = 'we are friends'
         content_type = 'text/plain'
-        response_hdr = server.header(content=content,
-                                     content_type=content_type)
+        receiver.respond(content=content,
+                         content_type=content_type)
 
         # The client receives and authenticates the response.
-        client.authenticate(response_hdr,
-                            content=content,
-                            content_type=content_type)
+        sender.accept_response(receiver.response_header,
+                               content=content,
+                               content_type=content_type)

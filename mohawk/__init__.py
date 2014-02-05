@@ -1,2 +1,2 @@
-from .client import *
-from .server import *
+from .sender import *
+from .receiver import *

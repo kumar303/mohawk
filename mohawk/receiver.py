@@ -6,23 +6,26 @@ from .util import (calculate_mac,
                    parse_authorization_header,
                    validate_credentials)
 
+__all__ = ['Receiver']
 log = logging.getLogger(__name__)
 
 
-class Server(HawkAuthority):
+class Receiver(HawkAuthority):
 
-    def __init__(self, credentials_map, seen_nonce=None):
+    def __init__(self,
+                 credentials_map,
+                 header,
+                 url,
+                 method,
+                 content='',
+                 content_type='text/plain',
+                 seen_nonce=None,
+                 **auth_kw):
+
+        self.response_header = None  # make into property that can raise exc?
         self.credentials_map = credentials_map
-        self.trusted_request = None
         self.seen_nonce = seen_nonce
 
-    def authenticate(self,
-                     header,
-                     url,
-                     method,
-                     content='',
-                     content_type='text/plain',
-                     **auth_kw):
         log.debug('authenticating {header}'.format(header=header))
 
         parsed_header = parse_authorization_header(header)
@@ -52,36 +55,27 @@ class Server(HawkAuthority):
 
         # Now that we verified an incoming request, we can re-use some of its
         # properties to build our response header.
-        self.trusted_request = {'header': parsed_header,
-                                'resource': resource}
 
-    def header(self,
-               content='',
-               content_type='text/plain',
-               trusted_request=None):
-        """
-        Generate a Server-Authorization header for a given response.
-        """
+        self.parsed_header = parsed_header
+        self.resource = resource
+
+    def respond(self,
+                content='',
+                content_type='text/plain'):
+
         log.debug('generating response header')
-        if trusted_request:
-            self.trusted_request = trusted_request
-        if not self.trusted_request:
-            raise NotImplementedError(
-                'cannot build a response header without having already '
-                'authenticated an incoming request. This can be fixed by '
-                'adding some extra parameters')
 
-        trusted = self.trusted_request
-
-        resource = Resource(url=trusted['resource'].url,
-                            credentials=trusted['resource'].credentials,
-                            ext=trusted['header'].get('ext', None),
-                            app=trusted['header'].get('app', None),
-                            dlg=trusted['header'].get('dlg', None),
-                            nonce=trusted['header']['nonce'],
-                            method=trusted['resource'].method,
+        resource = Resource(url=self.resource.url,
+                            credentials=self.resource.credentials,
+                            ext=self.parsed_header.get('ext', None),
+                            app=self.parsed_header.get('app', None),
+                            dlg=self.parsed_header.get('dlg', None),
+                            nonce=self.parsed_header['nonce'],
+                            method=self.resource.method,
                             content=content,
                             content_type=content_type)
 
         mac = calculate_mac('response', resource)
-        return self._make_header(resource, mac)
+
+        self.response_header = self._make_header(resource, mac)
+        return self.response_header
