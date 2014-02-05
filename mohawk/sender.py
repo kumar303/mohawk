@@ -65,7 +65,7 @@ class Sender(HawkAuthority):
                             timestamp=parsed_header['ts'],
                             content_type=content_type)
 
-        self._authenticate('response', parsed_header, resource, **auth_kw)
+        self._authorize('response', parsed_header, resource, **auth_kw)
 
     def reconfigure(self, credentials):
         validate_credentials(credentials)

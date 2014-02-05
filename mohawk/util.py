@@ -56,7 +56,7 @@ def calculate_payload_hash(payload, algorithm, content_type):
 
 
 def calculate_mac(mac_type, resource):
-    """Calculates a message authentication code (MAC)."""
+    """Calculates a message authorization code (MAC)."""
     normalized = normalize_string(mac_type, resource)
     log.debug('normalized resource for mac calc: {norm}'
               .format(norm=normalized))

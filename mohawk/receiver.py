@@ -51,7 +51,7 @@ class Receiver(HawkAuthority):
                             timestamp=parsed_header['ts'],
                             content_type=content_type)
 
-        self._authenticate('header', parsed_header, resource, **auth_kw)
+        self._authorize('header', parsed_header, resource, **auth_kw)
 
         # Now that we verified an incoming request, we can re-use some of its
         # properties to build our response header.

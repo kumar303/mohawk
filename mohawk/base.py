@@ -19,8 +19,8 @@ log = logging.getLogger(__name__)
 
 class HawkAuthority:
 
-    def _authenticate(self, mac_type, parsed_header, resource,
-                      timestamp_skew_sec=60):
+    def _authorize(self, mac_type, parsed_header, resource,
+                   timestamp_skew_sec=60):
         now = utc_now()
 
         mac = calculate_mac(mac_type, resource)
@@ -66,7 +66,7 @@ class HawkAuthority:
                                'compared to {now}'
                                .format(ts=their_ts, now=now))
 
-        log.debug('authenticated OK')
+        log.debug('authorized OK')
 
     def _make_header(self, resource, mac):
         header = (

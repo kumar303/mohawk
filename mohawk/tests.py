@@ -309,12 +309,6 @@ class TestReceiver(Base):
 
         return receiver.response_header
 
-    def authenticate(self, header, **kw):
-        credentials = kw.pop('credentials', None)
-        if credentials:
-            self.client.recredentialsure(credentials)
-        self.client.authenticate(header, **kw)
-
     def test_invalid_credentials_lookup(self):
         with self.assertRaises(InvalidCredentials):
             # Return invalid credentials.
@@ -416,7 +410,7 @@ class TestSendAndReceive(Base):
                         content=content,
                         content_type=content_type)
 
-        # The server receives and authenticates the response.
+        # The server receives a request and authorizes access.
         receiver = Receiver(lambda id: credentials,
                             sender.request_header,
                             url, method,
@@ -429,7 +423,7 @@ class TestSendAndReceive(Base):
         receiver.respond(content=content,
                          content_type=content_type)
 
-        # The client receives and authenticates the response.
+        # The client receives a response and authorizes access.
         sender.accept_response(receiver.response_header,
                                content=content,
                                content_type=content_type)

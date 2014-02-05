@@ -3,12 +3,12 @@ Mohawk
 ======
 
 Mohawk is an alternate Python implementation of the
-`Hawk HTTP authentication scheme`_.
+`Hawk HTTP authorization scheme`_.
 
 If you don't see any documentation here it probably means the lib is unstable
 and you shouldn't use it.
 
-.. _`Hawk HTTP authentication scheme`: https://github.com/hueniverse/hawk
+.. _`Hawk HTTP authorization scheme`: https://github.com/hueniverse/hawk
 
 Why Mohawk?
 -----------

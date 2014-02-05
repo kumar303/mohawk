@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(name='mohawk',
       version='0.0.1',
-      description="Library for Hawk HTTP authentication",
+      description="Library for Hawk HTTP authorization",
       long_description='',
       author='Kumar McMillan, Austin King',
       author_email='kumar.mcmillan@gmail.com',
