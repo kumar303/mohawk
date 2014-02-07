@@ -10,6 +10,13 @@ and you shouldn't use it.
 
 .. _`Hawk HTTP authorization scheme`: https://github.com/hueniverse/hawk
 
+TODO
+----
+
+* Implement bewit. **The bewit URI scheme is not implemented at this time.**
+* Make content hash checking optional per spec. Right now you'll get a
+  failure if the sender or receiver isn't hashing their content.
+
 Why Mohawk?
 -----------
 
