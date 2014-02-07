@@ -61,13 +61,14 @@ class Receiver(HawkAuthority):
 
     def respond(self,
                 content='',
-                content_type='text/plain'):
+                content_type='text/plain',
+                ext=None):
 
         log.debug('generating response header')
 
         resource = Resource(url=self.resource.url,
                             credentials=self.resource.credentials,
-                            ext=self.parsed_header.get('ext', None),
+                            ext=ext,
                             app=self.parsed_header.get('app', None),
                             dlg=self.parsed_header.get('dlg', None),
                             nonce=self.parsed_header['nonce'],

@@ -44,3 +44,15 @@ Why Mohawk?
 * I re-used a lot of `PyHawk`_ code :)
 
 .. _`PyHawk`: https://github.com/mozilla/PyHawk
+
+Changelog
+---------
+
+- **0.0.2** (2014-02-06)
+
+  - Responding with a custom ext now works
+  - Protected app and dlg according to spec when accepting responses
+
+- **0.0.1** (2014-02-05)
+
+  - initial release of partial implementation

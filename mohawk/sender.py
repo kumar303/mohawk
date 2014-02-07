@@ -53,17 +53,19 @@ class Sender(HawkAuthority):
 
         parsed_header = parse_authorization_header(response_header)
 
-        resource = Resource(url=self.req_resource.url,
-                            method=self.req_resource.method,
-                            ext=parsed_header.get('ext', None),
-                            app=parsed_header.get('app', None),
-                            dlg=parsed_header.get('dlg', None),
-                            credentials=self.credentials,
+        resource = Resource(ext=parsed_header.get('ext', None),
                             nonce=parsed_header['nonce'],
-                            seen_nonce=self.seen_nonce,
-                            content=content,
                             timestamp=parsed_header['ts'],
-                            content_type=content_type)
+                            content=content,
+                            content_type=content_type,
+                            # The following response attributes must match
+                            # our request:
+                            url=self.req_resource.url,
+                            method=self.req_resource.method,
+                            app=self.req_resource.app,
+                            dlg=self.req_resource.dlg,
+                            credentials=self.credentials,
+                            seen_nonce=self.seen_nonce)
 
         self._authorize('response', parsed_header, resource, **auth_kw)
 

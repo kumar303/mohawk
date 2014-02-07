@@ -354,6 +354,34 @@ class TestReceiver(Base):
         with self.assertRaises(MacMismatch):
             self.respond(receiver=wrong_receiver)
 
+    def test_respond_with_ext(self):
+        self.receive()
+
+        ext = 'custom-ext'
+        self.respond(ext=ext)
+        header = parse_authorization_header(self.receiver.response_header)
+        eq_(header['ext'], ext)
+
+    def test_respond_with_wrong_app(self):
+        self.receive(sender_kw=dict(app='TAMPERED-WITH', dlg='delegation'))
+        self.receiver.respond()
+        wrong_receiver = self.receiver
+
+        self.receive(sender_kw=dict(app='real-app', dlg='delegation'))
+
+        with self.assertRaises(MacMismatch):
+            self.sender.accept_response(wrong_receiver.response_header)
+
+    def test_respond_with_wrong_dlg(self):
+        self.receive(sender_kw=dict(app='app', dlg='TAMPERED-WITH'))
+        self.receiver.respond()
+        wrong_receiver = self.receiver
+
+        self.receive(sender_kw=dict(app='app', dlg='real-dlg'))
+
+        with self.assertRaises(MacMismatch):
+            self.sender.accept_response(wrong_receiver.response_header)
+
     def test_receive_wrong_method(self):
         self.receive(method='GET')
         wrong_sender = self.sender
