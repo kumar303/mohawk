@@ -14,14 +14,17 @@ from .util import (calculate_mac,
                    strings_match,
                    utc_now)
 
+default_ts_skew_in_seconds = 60
 log = logging.getLogger(__name__)
 
 
 class HawkAuthority:
 
     def _authorize(self, mac_type, parsed_header, resource,
-                   timestamp_skew_sec=60):
-        now = utc_now()
+                   timestamp_skew_in_seconds=default_ts_skew_in_seconds,
+                   localtime_offset_in_seconds=0):
+
+        now = utc_now(offset_in_seconds=localtime_offset_in_seconds)
 
         mac = calculate_mac(mac_type, resource)
         if not strings_match(mac, parsed_header['mac']):
@@ -61,10 +64,11 @@ class HawkAuthority:
 
         their_ts = int(parsed_header['ts'])
 
-        if math.fabs(their_ts - now) > timestamp_skew_sec:
+        if math.fabs(their_ts - now) > timestamp_skew_in_seconds:
             raise TokenExpired('token with UTC timestamp {ts} has expired; '
                                'compared to {now}'
-                               .format(ts=their_ts, now=now))
+                               .format(ts=their_ts, now=now),
+                               localtime_in_seconds=now)
 
         log.debug('authorized OK')
 

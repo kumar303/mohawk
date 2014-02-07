@@ -1,6 +1,6 @@
 import logging
 
-from .base import HawkAuthority, Resource
+from .base import default_ts_skew_in_seconds, HawkAuthority, Resource
 from .exc import CredentialsLookupError
 from .util import (calculate_mac,
                    parse_authorization_header,
@@ -20,6 +20,8 @@ class Receiver(HawkAuthority):
                  content='',
                  content_type='text/plain',
                  seen_nonce=None,
+                 localtime_offset_in_seconds=0,
+                 timestamp_skew_in_seconds=default_ts_skew_in_seconds,
                  **auth_kw):
 
         self.response_header = None  # make into property that can raise exc?
@@ -51,7 +53,10 @@ class Receiver(HawkAuthority):
                             timestamp=parsed_header['ts'],
                             content_type=content_type)
 
-        self._authorize('header', parsed_header, resource, **auth_kw)
+        self._authorize('header', parsed_header, resource,
+            timestamp_skew_in_seconds=timestamp_skew_in_seconds,
+            localtime_offset_in_seconds=localtime_offset_in_seconds,
+            **auth_kw)
 
         # Now that we verified an incoming request, we can re-use some of its
         # properties to build our response header.

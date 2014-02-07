@@ -164,9 +164,10 @@ def strings_match(a, b):
     return result == 0
 
 
-def utc_now():
+def utc_now(offset_in_seconds=0.0):
     # TODO: add support for SNTP server? See ntplib module.
-    return int(math.floor(calendar.timegm(time.gmtime())))
+    return int(math.floor(calendar.timegm(time.gmtime()) +
+                          float(offset_in_seconds)))
 
 
 # Allowed value characters:

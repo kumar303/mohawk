@@ -1,6 +1,6 @@
 import logging
 
-from .base import HawkAuthority, Resource
+from .base import default_ts_skew_in_seconds, HawkAuthority, Resource
 from .util import (calculate_mac,
                    parse_authorization_header,
                    validate_credentials)
@@ -47,6 +47,9 @@ class Sender(HawkAuthority):
                         response_header,
                         content='',
                         content_type='text/plain',
+                        localtime_offset_in_seconds=0,
+                        timestamp_skew_in_seconds=default_ts_skew_in_seconds,
+                        _timestamp=None,
                         **auth_kw):
         log.debug('accepting response {header}'
                   .format(header=response_header))
@@ -55,7 +58,7 @@ class Sender(HawkAuthority):
 
         resource = Resource(ext=parsed_header.get('ext', None),
                             nonce=parsed_header['nonce'],
-                            timestamp=parsed_header['ts'],
+                            timestamp=_timestamp or parsed_header['ts'],
                             content=content,
                             content_type=content_type,
                             # The following response attributes must match
@@ -67,7 +70,10 @@ class Sender(HawkAuthority):
                             credentials=self.credentials,
                             seen_nonce=self.seen_nonce)
 
-        self._authorize('response', parsed_header, resource, **auth_kw)
+        self._authorize('response', parsed_header, resource,
+            timestamp_skew_in_seconds=timestamp_skew_in_seconds,
+            localtime_offset_in_seconds=localtime_offset_in_seconds,
+            **auth_kw)
 
     def reconfigure(self, credentials):
         validate_credentials(credentials)

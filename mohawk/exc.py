@@ -16,7 +16,10 @@ class DataTamperedWith(HawkFail):
 
 
 class TokenExpired(HawkFail):
-    pass
+
+    def __init__(self, *args, **kw):
+        self.localtime_in_seconds = kw.pop('localtime_in_seconds')
+        super(HawkFail, self).__init__(*args, **kw)
 
 
 class AlreadyProcessed(HawkFail):

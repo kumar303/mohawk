@@ -48,6 +48,12 @@ Why Mohawk?
 Changelog
 ---------
 
+- **0.0.3** (unreleased)
+
+  - exposed ``localtime_in_seconds`` on ``TokenExpired`` exception
+    per Hawk spec
+  - better localtime offset and skew handling
+
 - **0.0.2** (2014-02-06)
 
   - Responding with a custom ext now works

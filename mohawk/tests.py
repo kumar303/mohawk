@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+import mock
 from nose.tools import eq_
 
 from . import Receiver, Sender
@@ -168,9 +169,34 @@ class TestSender(Base):
         self.receive(sn.request_header)
 
     def test_expired_ts(self):
-        sn = self.Sender(_timestamp=utc_now() - 120)
+        now = utc_now() - 120
+        sn = self.Sender(_timestamp=now)
         with self.assertRaises(TokenExpired):
             self.receive(sn.request_header)
+
+    def test_expired_exception_reports_localtime(self):
+        now = utc_now()
+        ts = now - 120
+        sn = self.Sender(_timestamp=ts)  # force expiry
+
+        with mock.patch('mohawk.base.utc_now') as fake_now:
+            fake_now.return_value = now
+            with self.assertRaises(TokenExpired) as exc:
+                self.receive(sn.request_header)
+
+        eq_(exc.exception.localtime_in_seconds, now)
+
+    def test_localtime_offset(self):
+        now = utc_now() - 120
+        sn = self.Sender(_timestamp=now)
+        # Without an offset this will raise an expired exception.
+        self.receive(sn.request_header, localtime_offset_in_seconds=-120)
+
+    def test_localtime_skew(self):
+        now = utc_now() - 120
+        sn = self.Sender(_timestamp=now)
+        # Without an offset this will raise an expired exception.
+        self.receive(sn.request_header, timestamp_skew_in_seconds=120)
 
     def test_hash_tampering(self):
         sn = self.Sender()
@@ -353,6 +379,29 @@ class TestReceiver(Base):
 
         with self.assertRaises(MacMismatch):
             self.respond(receiver=wrong_receiver)
+
+    def test_respond_with_expired_ts(self):
+        self.receive()
+        hdr = self.receiver.respond()
+
+        with mock.patch('mohawk.base.utc_now') as fn:
+            fn.return_value = 0  # force an expiry
+
+            with self.assertRaises(TokenExpired):
+                self.sender.accept_response(hdr)
+
+    def test_respond_with_bad_ts_skew_ok(self):
+        now = utc_now() - 120
+
+        self.receive()
+        hdr = self.receiver.respond()
+
+        with mock.patch('mohawk.base.utc_now') as fn:
+            fn.return_value = now
+
+            # Without an offset this will raise an expired exception.
+            self.sender.accept_response(hdr,
+                                        timestamp_skew_in_seconds=120)
 
     def test_respond_with_ext(self):
         self.receive()
