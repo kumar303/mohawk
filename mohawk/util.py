@@ -62,7 +62,7 @@ def calculate_mac(mac_type, resource):
               .format(norm=normalized))
     digestmod = getattr(hashlib, resource.credentials['algorithm'])
     result = hmac.new(resource.credentials['key'], normalized, digestmod)
-    return urlsafe_b64encode(result.digest())
+    return b64encode(result.digest())
 
 
 def normalize_string(mac_type, resource):

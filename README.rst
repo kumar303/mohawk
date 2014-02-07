@@ -55,8 +55,10 @@ Why Mohawk?
 Changelog
 ---------
 
-- **0.0.3** (unreleased)
+- **0.0.3** (2014-02-07)
 
+  - Bug fix: Macs were made using URL safe base64 encoding which differs
+    from the Node Hawk lib (it just uses regular base64)
   - exposed ``localtime_in_seconds`` on ``TokenExpired`` exception
     per Hawk spec
   - better localtime offset and skew handling
