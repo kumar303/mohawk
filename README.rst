@@ -55,6 +55,11 @@ Why Mohawk?
 Changelog
 ---------
 
+- **0.0.4** (unreleased)
+
+  - Bug fix: response processing re-uses sender's nonce and timestamp
+    per the Node Hawk lib.
+
 - **0.0.3** (2014-02-07)
 
   - Bug fix: Macs were made using URL safe base64 encoding which differs

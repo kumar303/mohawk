@@ -76,12 +76,14 @@ class Receiver(HawkAuthority):
                             ext=ext,
                             app=self.parsed_header.get('app', None),
                             dlg=self.parsed_header.get('dlg', None),
-                            nonce=self.parsed_header['nonce'],
                             method=self.resource.method,
                             content=content,
-                            content_type=content_type)
+                            content_type=content_type,
+                            nonce=self.parsed_header['nonce'],
+                            timestamp=self.parsed_header['ts'])
 
         mac = calculate_mac('response', resource)
 
-        self.response_header = self._make_header(resource, mac)
+        self.response_header = self._make_header(resource, mac,
+                                                 additional_keys=['ext'])
         return self.response_header

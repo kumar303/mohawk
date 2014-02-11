@@ -380,6 +380,16 @@ class TestReceiver(Base):
         with self.assertRaises(MacMismatch):
             self.respond(receiver=wrong_receiver)
 
+    def test_respond_with_wrong_nonce(self):
+        self.receive(sender_kw=dict(nonce='another-nonce'))
+        wrong_receiver = self.receiver
+
+        self.receive()
+
+        with self.assertRaises(MacMismatch):
+            # The nonce must match the one sent in the original request.
+            self.respond(receiver=wrong_receiver)
+
     def test_respond_with_expired_ts(self):
         self.receive()
         hdr = self.receiver.respond()

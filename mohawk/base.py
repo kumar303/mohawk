@@ -21,6 +21,7 @@ log = logging.getLogger(__name__)
 class HawkAuthority:
 
     def _authorize(self, mac_type, parsed_header, resource,
+                   their_timestamp=None,
                    timestamp_skew_in_seconds=default_ts_skew_in_seconds,
                    localtime_offset_in_seconds=0):
 
@@ -62,7 +63,7 @@ class HawkAuthority:
             log.warn('seen_nonce was None; not checking nonce. '
                      'You may be vulnerable to replay attacks')
 
-        their_ts = int(parsed_header['ts'])
+        their_ts = int(their_timestamp or parsed_header['ts'])
 
         if math.fabs(their_ts - now) > timestamp_skew_in_seconds:
             raise TokenExpired('token with UTC timestamp {ts} has expired; '
@@ -72,25 +73,42 @@ class HawkAuthority:
 
         log.debug('authorized OK')
 
-    def _make_header(self, resource, mac):
-        header = (
-            u'Hawk id="{id}", ts="{ts}", nonce="{nonce}", '
-            u'hash="{hash}", mac="{mac}"'
-        ).format(id=prepare_header_val(resource.credentials['id']),
-                 ts=prepare_header_val(resource.timestamp),
-                 nonce=prepare_header_val(resource.nonce),
-                 hash=prepare_header_val(resource.content_hash),
-                 mac=prepare_header_val(mac))
+    def _make_header(self, resource, mac, additional_keys=None):
+        keys = additional_keys
+        if not keys:
+            # These are the default header keys that you'd send with a
+            # request header. Response headers are odd because they
+            # exclude a bunch of keys.
+            keys = ('id', 'ts', 'nonce', 'ext', 'app', 'dlg')
 
-        if resource.ext:
+        header = u'Hawk mac="{mac}", hash="{hash}"'.format(
+            mac=prepare_header_val(mac),
+            hash=prepare_header_val(resource.content_hash))
+
+        if 'id' in keys:
+            header = u'{header}, id="{id}"'.format(
+                header=header,
+                id=prepare_header_val(resource.credentials['id']))
+
+        if 'ts' in keys:
+            header = u'{header}, ts="{ts}"'.format(
+                header=header, ts=prepare_header_val(resource.timestamp))
+
+        if 'nonce' in keys:
+            header = u'{header}, nonce="{nonce}"'.format(
+                header=header, nonce=prepare_header_val(resource.nonce))
+
+        # These are optional so we need to check if they have values first.
+
+        if 'ext' in keys and resource.ext:
             header = u'{header}, ext="{ext}"'.format(
                 header=header, ext=prepare_header_val(resource.ext))
 
-        if resource.app:
+        if 'app' in keys and resource.app:
             header = u'{header}, app="{app}"'.format(
                 header=header, app=prepare_header_val(resource.app))
 
-        if resource.dlg:
+        if 'dlg' in keys and resource.dlg:
             header = u'{header}, dlg="{dlg}"'.format(
                 header=header, dlg=prepare_header_val(resource.dlg))
 
@@ -127,6 +145,7 @@ class Resource:
         self.nonce = kw.pop('nonce', None)
         if not self.nonce:
             self.nonce = random_string(6)
+
         # This is a lookup function for checking nonces.
         self.seen_nonce = kw.pop('seen_nonce', None)
 
@@ -140,6 +159,10 @@ class Resource:
         self.name = url_parts['resource'] or ''
         self.host = url_parts['hostname'] or ''
         self.port = str(url_parts['port'])
+
+        if kw.keys():
+            raise TypeError('Unknown keyword argument(s): {0}'
+                            .format(kw.keys()))
 
     def parse_url(self, url):
         url_parts = urlparse(url)

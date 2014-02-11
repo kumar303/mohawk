@@ -49,7 +49,6 @@ class Sender(HawkAuthority):
                         content_type='text/plain',
                         localtime_offset_in_seconds=0,
                         timestamp_skew_in_seconds=default_ts_skew_in_seconds,
-                        _timestamp=None,
                         **auth_kw):
         log.debug('accepting response {header}'
                   .format(header=response_header))
@@ -57,12 +56,13 @@ class Sender(HawkAuthority):
         parsed_header = parse_authorization_header(response_header)
 
         resource = Resource(ext=parsed_header.get('ext', None),
-                            nonce=parsed_header['nonce'],
-                            timestamp=_timestamp or parsed_header['ts'],
                             content=content,
                             content_type=content_type,
-                            # The following response attributes must match
-                            # our request:
+                            # The following response attributes are
+                            # in reference to the original request,
+                            # not to the reponse header:
+                            timestamp=self.req_resource.timestamp,
+                            nonce=self.req_resource.nonce,
                             url=self.req_resource.url,
                             method=self.req_resource.method,
                             app=self.req_resource.app,
@@ -71,6 +71,11 @@ class Sender(HawkAuthority):
                             seen_nonce=self.seen_nonce)
 
         self._authorize('response', parsed_header, resource,
+            # Per Node lib, a responder macs the *sender's* timestamp.
+            # It does not create its own timestamp.
+            # I suppose a slow response could time out here. Maybe only check
+            # mac failures, not timeouts?
+            their_timestamp=resource.timestamp,
             timestamp_skew_in_seconds=timestamp_skew_in_seconds,
             localtime_offset_in_seconds=localtime_offset_in_seconds,
             **auth_kw)
