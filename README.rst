@@ -55,10 +55,12 @@ Why Mohawk?
 Changelog
 ---------
 
-- **0.0.4** (unreleased)
+- **0.0.4** (2014-02-11)
 
-  - Bug fix: response processing re-uses sender's nonce and timestamp
-    per the Node Hawk lib.
+  - Bug fix: response processing now re-uses sender's nonce and timestamp
+    per the Node Hawk lib
+  - No longer assume content-type: text/plain if content type is not
+    specificed
 
 - **0.0.3** (2014-02-07)
 

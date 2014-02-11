@@ -18,7 +18,7 @@ class Receiver(HawkAuthority):
                  url,
                  method,
                  content='',
-                 content_type='text/plain',
+                 content_type='',
                  seen_nonce=None,
                  localtime_offset_in_seconds=0,
                  timestamp_skew_in_seconds=default_ts_skew_in_seconds,
@@ -66,7 +66,7 @@ class Receiver(HawkAuthority):
 
     def respond(self,
                 content='',
-                content_type='text/plain',
+                content_type='',
                 ext=None):
 
         log.debug('generating response header')

@@ -15,7 +15,7 @@ class Sender(HawkAuthority):
                  url,
                  method,
                  content='',
-                 content_type='text/plain',
+                 content_type='',
                  nonce=None,
                  ext=None,
                  app=None,
@@ -46,7 +46,7 @@ class Sender(HawkAuthority):
     def accept_response(self,
                         response_header,
                         content='',
-                        content_type='text/plain',
+                        content_type='',
                         localtime_offset_in_seconds=0,
                         timestamp_skew_in_seconds=default_ts_skew_in_seconds,
                         **auth_kw):
