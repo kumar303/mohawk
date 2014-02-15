@@ -14,8 +14,9 @@ class Sender(HawkAuthority):
     def __init__(self, credentials,
                  url,
                  method,
-                 content='',
-                 content_type='',
+                 content=None,
+                 content_type=None,
+                 always_hash_content=True,
                  nonce=None,
                  ext=None,
                  app=None,
@@ -37,6 +38,7 @@ class Sender(HawkAuthority):
                                      nonce=nonce,
                                      method=method,
                                      content=content,
+                                     always_hash_content=always_hash_content,
                                      timestamp=_timestamp,
                                      content_type=content_type)
 
@@ -45,8 +47,9 @@ class Sender(HawkAuthority):
 
     def accept_response(self,
                         response_header,
-                        content='',
-                        content_type='',
+                        content=None,
+                        content_type=None,
+                        accept_untrusted_content=False,
                         localtime_offset_in_seconds=0,
                         timestamp_skew_in_seconds=default_ts_skew_in_seconds,
                         **auth_kw):
@@ -70,7 +73,8 @@ class Sender(HawkAuthority):
                             credentials=self.credentials,
                             seen_nonce=self.seen_nonce)
 
-        self._authorize('response', parsed_header, resource,
+        self._authorize(
+            'response', parsed_header, resource,
             # Per Node lib, a responder macs the *sender's* timestamp.
             # It does not create its own timestamp.
             # I suppose a slow response could time out here. Maybe only check
@@ -78,6 +82,7 @@ class Sender(HawkAuthority):
             their_timestamp=resource.timestamp,
             timestamp_skew_in_seconds=timestamp_skew_in_seconds,
             localtime_offset_in_seconds=localtime_offset_in_seconds,
+            accept_untrusted_content=accept_untrusted_content,
             **auth_kw)
 
     def reconfigure(self, credentials):

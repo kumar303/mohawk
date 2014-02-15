@@ -21,6 +21,7 @@ class Receiver(HawkAuthority):
                  content_type='',
                  seen_nonce=None,
                  localtime_offset_in_seconds=0,
+                 accept_untrusted_content=False,
                  timestamp_skew_in_seconds=default_ts_skew_in_seconds,
                  **auth_kw):
 
@@ -53,9 +54,11 @@ class Receiver(HawkAuthority):
                             timestamp=parsed_header['ts'],
                             content_type=content_type)
 
-        self._authorize('header', parsed_header, resource,
+        self._authorize(
+            'header', parsed_header, resource,
             timestamp_skew_in_seconds=timestamp_skew_in_seconds,
             localtime_offset_in_seconds=localtime_offset_in_seconds,
+            accept_untrusted_content=accept_untrusted_content,
             **auth_kw)
 
         # Now that we verified an incoming request, we can re-use some of its
@@ -65,8 +68,9 @@ class Receiver(HawkAuthority):
         self.resource = resource
 
     def respond(self,
-                content='',
-                content_type='',
+                content=None,
+                content_type=None,
+                always_hash_content=True,
                 ext=None):
 
         log.debug('generating response header')
@@ -79,6 +83,7 @@ class Receiver(HawkAuthority):
                             method=self.resource.method,
                             content=content,
                             content_type=content_type,
+                            always_hash_content=always_hash_content,
                             nonce=self.parsed_header['nonce'],
                             timestamp=self.parsed_header['ts'])
 

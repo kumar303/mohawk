@@ -41,9 +41,7 @@ def calculate_payload_hash(payload, algorithm, content_type):
     parts = []
     parts.append('hawk.' + str(HAWK_VER) + '.payload\n')
     parts.append(parse_content_type(content_type) + '\n')
-    if payload is None:
-        raise ValueError('payload was None')
-    parts.append(payload)
+    parts.append(payload or '')
     parts.append('\n')
 
     log.debug('calculating payload hash from:\n{parts}'

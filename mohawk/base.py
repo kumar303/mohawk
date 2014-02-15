@@ -23,9 +23,25 @@ class HawkAuthority:
     def _authorize(self, mac_type, parsed_header, resource,
                    their_timestamp=None,
                    timestamp_skew_in_seconds=default_ts_skew_in_seconds,
-                   localtime_offset_in_seconds=0):
+                   localtime_offset_in_seconds=0,
+                   accept_untrusted_content=False):
 
         now = utc_now(offset_in_seconds=localtime_offset_in_seconds)
+
+        check_hash = True
+        if 'hash' not in parsed_header and accept_untrusted_content:
+            # The request did not hash its content.
+            log.debug('NOT calculating/verifiying payload hash '
+                      '(no hash in header)')
+            check_hash = False
+
+        their_hash = parsed_header.get('hash', '')
+        if check_hash and not their_hash:
+            log.debug('request unexpectedly did not hash its content')
+
+        if not check_hash:
+            # This makes sure the mac is calculated without a hash.
+            resource.content_hash = None
 
         mac = calculate_mac(mac_type, resource)
         if not strings_match(mac, parsed_header['mac']):
@@ -33,24 +49,23 @@ class HawkAuthority:
                               'theirs: {theirs}'
                               .format(ours=mac, theirs=parsed_header['mac']))
 
-        # TODO: if content is empty should we be less strict and allow
-        # an empty hash attribute in the header?
-        p_hash = calculate_payload_hash(resource.content,
-                                        resource.credentials['algorithm'],
-                                        resource.content_type)
-        if not strings_match(p_hash, parsed_header['hash']):
-            # The hash declared in the header is incorrect.
-            # Content could have been tampered with.
-            log.debug('mismatched content: {content}'
-                      .format(content=repr(resource.content)))
-            log.debug('mismatched content-type: {typ}'
-                      .format(typ=repr(resource.content_type)))
-            raise MisComputedContentHash(
-                'Our hash {ours} ({algo}) did not '
-                'match theirs {theirs}'
-                .format(ours=p_hash,
-                        theirs=parsed_header['hash'],
-                        algo=resource.credentials['algorithm']))
+        if check_hash:
+            p_hash = calculate_payload_hash(resource.content,
+                                            resource.credentials['algorithm'],
+                                            resource.content_type)
+            if not strings_match(p_hash, their_hash):
+                # The hash declared in the header is incorrect.
+                # Content could have been tampered with.
+                log.debug('mismatched content: {content}'
+                          .format(content=repr(resource.content)))
+                log.debug('mismatched content-type: {typ}'
+                          .format(typ=repr(resource.content_type)))
+                raise MisComputedContentHash(
+                    'Our hash {ours} ({algo}) did not '
+                    'match theirs {theirs}'
+                    .format(ours=p_hash,
+                            theirs=their_hash,
+                            algo=resource.credentials['algorithm']))
 
         if resource.seen_nonce:
             if resource.seen_nonce(parsed_header['nonce'],
@@ -81,9 +96,12 @@ class HawkAuthority:
             # exclude a bunch of keys.
             keys = ('id', 'ts', 'nonce', 'ext', 'app', 'dlg')
 
-        header = u'Hawk mac="{mac}", hash="{hash}"'.format(
-            mac=prepare_header_val(mac),
-            hash=prepare_header_val(resource.content_hash))
+        header = u'Hawk mac="{mac}"'.format(mac=prepare_header_val(mac))
+
+        if resource.content_hash:
+            header = u'{header}, hash="{hash}"'.format(
+                header=header,
+                hash=prepare_header_val(resource.content_hash))
 
         if 'id' in keys:
             header = u'{header}, id="{id}"'.format(
@@ -130,15 +148,34 @@ class Resource:
     def __init__(self, **kw):
         self.credentials = kw.pop('credentials')
         self.method = kw.pop('method').upper()
-        self.content = kw.pop('content')
-        self.content_type = kw.pop('content_type')
+        self.content = kw.pop('content', None)
+        self.content_type = kw.pop('content_type', None)
+        self.always_hash_content = kw.pop('always_hash_content', True)
         self.ext = kw.pop('ext', None)
         self.app = kw.pop('app', None)
         self.dlg = kw.pop('dlg', None)
 
-        self.content_hash = calculate_payload_hash(
-            self.content, self.credentials['algorithm'],
-            self.content_type)
+        if self.content is None or self.content_type is None:
+            if self.always_hash_content:
+                # Be really strict about allowing developers to skip content
+                # hashing. If they get this far they may be unintentiionally
+                # skipping it.
+                raise ValueError(
+                    'payload content and/or content_type cannot be '
+                    'empty without an explcit allowance')
+            log.debug('NOT hashing content')
+            hash_contents = False
+        else:
+            hash_contents = True
+
+        if hash_contents:
+            # TODO: defer content hashing for speed.
+            # We only need to generate a hash if the MAC check fails.
+            self.content_hash = calculate_payload_hash(
+                self.content, self.credentials['algorithm'],
+                self.content_type)
+        else:
+            self.content_hash = None
 
         self.timestamp = str(kw.pop('timestamp', None) or utc_now())
 

@@ -14,8 +14,6 @@ TODO
 ----
 
 * Implement bewit. **The bewit URI scheme is not implemented at this time.**
-* Make content hash checking optional per spec. Right now you'll get a
-  failure if the sender or receiver isn't hashing their content.
 
 Why Mohawk?
 -----------
@@ -54,6 +52,10 @@ Why Mohawk?
 
 Changelog
 ---------
+
+- **0.0.5** (unreleased)
+
+  - Implemented optional content hashing per spec but in a less error prone way
 
 - **0.0.4** (2014-02-11)
 

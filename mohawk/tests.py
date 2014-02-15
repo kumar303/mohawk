@@ -72,6 +72,8 @@ class TestSender(Base):
 
     def Sender(self, method='GET', **kw):
         credentials = kw.pop('credentials', self.credentials)
+        kw.setdefault('content', '')
+        kw.setdefault('content_type', '')
         sender = Sender(credentials, self.url, method, **kw)
         return sender
 
@@ -105,6 +107,20 @@ class TestSender(Base):
                          content_type=content_type)
         self.receive(sn.request_header, method=method, content=content,
                      content_type=content_type)
+
+    def test_missing_payload_details(self):
+        with self.assertRaises(ValueError):
+            self.Sender(method='POST', content=None, content_type=None)
+
+    def test_skip_payload_hashing(self):
+        method = 'POST'
+        content = '{"bar": "foobs"}'
+        content_type = 'application/json'
+        sn = self.Sender(method=method, content=None, content_type=None,
+                         always_hash_content=False)
+        self.receive(sn.request_header, method=method, content=content,
+                     content_type=content_type,
+                     accept_untrusted_content=True)
 
     def test_tamper_with_host(self):
         sn = self.Sender()
@@ -311,6 +327,8 @@ class TestReceiver(Base):
         url = kw.pop('url', self.url)
         sender = kw.pop('sender', None)
         sender_kw = kw.pop('sender_kw', {})
+        sender_kw.setdefault('content', '')
+        sender_kw.setdefault('content_type', '')
         sender_url = kw.pop('sender_url', url)
 
         credentials_map = kw.pop('credentials_map',
@@ -328,8 +346,12 @@ class TestReceiver(Base):
 
     def respond(self, **kw):
         accept_kw = kw.pop('accept_kw', {})
+        accept_kw.setdefault('content', '')
+        accept_kw.setdefault('content_type', '')
         receiver = kw.pop('receiver', self.receiver)
 
+        kw.setdefault('content', '')
+        kw.setdefault('content_type', '')
         receiver.respond(**kw)
         self.sender.accept_response(receiver.response_header, **accept_kw)
 
@@ -390,27 +412,34 @@ class TestReceiver(Base):
             # The nonce must match the one sent in the original request.
             self.respond(receiver=wrong_receiver)
 
+    def test_respond_with_unhashed_content(self):
+        self.receive()
+
+        self.respond(always_hash_content=False, content=None,
+                     content_type=None,
+                     accept_kw=dict(accept_untrusted_content=True))
+
     def test_respond_with_expired_ts(self):
         self.receive()
-        hdr = self.receiver.respond()
+        hdr = self.receiver.respond(content='', content_type='')
 
         with mock.patch('mohawk.base.utc_now') as fn:
             fn.return_value = 0  # force an expiry
 
             with self.assertRaises(TokenExpired):
-                self.sender.accept_response(hdr)
+                self.sender.accept_response(hdr, content='', content_type='')
 
     def test_respond_with_bad_ts_skew_ok(self):
         now = utc_now() - 120
 
         self.receive()
-        hdr = self.receiver.respond()
+        hdr = self.receiver.respond(content='', content_type='')
 
         with mock.patch('mohawk.base.utc_now') as fn:
             fn.return_value = now
 
             # Without an offset this will raise an expired exception.
-            self.sender.accept_response(hdr,
+            self.sender.accept_response(hdr, content='', content_type='',
                                         timestamp_skew_in_seconds=120)
 
     def test_respond_with_ext(self):
@@ -423,23 +452,25 @@ class TestReceiver(Base):
 
     def test_respond_with_wrong_app(self):
         self.receive(sender_kw=dict(app='TAMPERED-WITH', dlg='delegation'))
-        self.receiver.respond()
+        self.receiver.respond(content='', content_type='')
         wrong_receiver = self.receiver
 
         self.receive(sender_kw=dict(app='real-app', dlg='delegation'))
 
         with self.assertRaises(MacMismatch):
-            self.sender.accept_response(wrong_receiver.response_header)
+            self.sender.accept_response(wrong_receiver.response_header,
+                                        content='', content_type='')
 
     def test_respond_with_wrong_dlg(self):
         self.receive(sender_kw=dict(app='app', dlg='TAMPERED-WITH'))
-        self.receiver.respond()
+        self.receiver.respond(content='', content_type='')
         wrong_receiver = self.receiver
 
         self.receive(sender_kw=dict(app='app', dlg='real-dlg'))
 
         with self.assertRaises(MacMismatch):
-            self.sender.accept_response(wrong_receiver.response_header)
+            self.sender.accept_response(wrong_receiver.response_header,
+                                        content='', content_type='')
 
     def test_receive_wrong_method(self):
         self.receive(method='GET')
@@ -465,6 +496,11 @@ class TestReceiver(Base):
         with self.assertRaises(MacMismatch):
             self.receive(content='TAMPERED WITH',
                          sender=wrong_sender)
+
+    def test_unexpected_unhashed_content(self):
+        with self.assertRaises(MacMismatch):
+            self.receive(sender_kw=dict(content=None, content_type=None,
+                                        always_hash_content=False))
 
     def test_receive_wrong_content_type(self):
         self.receive(sender_kw=dict(content_type='text/html'),
