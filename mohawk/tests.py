@@ -108,6 +108,15 @@ class TestSender(Base):
         self.receive(sn.request_header, method=method, content=content,
                      content_type=content_type)
 
+    def test_post_content_type_with_trailing_charset(self):
+        method = 'POST'
+        content = '{"bar": "foobs"}'
+        content_type = 'application/json; charset=utf8'
+        sn = self.Sender(method=method, content=content,
+                         content_type=content_type)
+        self.receive(sn.request_header, method=method, content=content,
+                     content_type='application/json; charset=other')
+
     def test_missing_payload_details(self):
         with self.assertRaises(ValueError):
             self.Sender(method='POST', content=None, content_type=None)
