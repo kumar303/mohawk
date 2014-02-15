@@ -131,6 +131,16 @@ class TestSender(Base):
                      content_type=content_type,
                      accept_untrusted_content=True)
 
+    def test_cannot_skip_content_only(self):
+        with self.assertRaises(ValueError):
+            self.Sender(method='POST', content=None,
+                        content_type='application/json')
+
+    def test_cannot_skip_content_type_only(self):
+        with self.assertRaises(ValueError):
+            self.Sender(method='POST', content='{"foo": "bar"}',
+                        content_type=None)
+
     def test_tamper_with_host(self):
         sn = self.Sender()
         with self.assertRaises(MacMismatch):
@@ -510,6 +520,20 @@ class TestReceiver(Base):
         with self.assertRaises(MacMismatch):
             self.receive(sender_kw=dict(content=None, content_type=None,
                                         always_hash_content=False))
+
+    def test_cannot_receive_empty_content_only(self):
+        content_type = 'text/plain'
+        with self.assertRaises(ValueError):
+            self.receive(sender_kw=dict(content='<content>',
+                                        content_type=content_type),
+                         content=None, content_type=content_type)
+
+    def test_cannot_receive_empty_content_type_only(self):
+        content = '<content>'
+        with self.assertRaises(ValueError):
+            self.receive(sender_kw=dict(content=content,
+                                        content_type='text/plain'),
+                         content=content, content_type=None)
 
     def test_receive_wrong_content_type(self):
         self.receive(sender_kw=dict(content_type='text/html'),

@@ -53,9 +53,9 @@ def calculate_payload_hash(payload, algorithm, content_type):
     return b64encode(p_hash.digest())
 
 
-def calculate_mac(mac_type, resource):
+def calculate_mac(mac_type, resource, content_hash):
     """Calculates a message authorization code (MAC)."""
-    normalized = normalize_string(mac_type, resource)
+    normalized = normalize_string(mac_type, resource, content_hash)
     log.debug('normalized resource for mac calc: {norm}'
               .format(norm=normalized))
     digestmod = getattr(hashlib, resource.credentials['algorithm'])
@@ -63,8 +63,8 @@ def calculate_mac(mac_type, resource):
     return b64encode(result.digest())
 
 
-def normalize_string(mac_type, resource):
-    """Serializes mac_type and options into a HAWK string."""
+def normalize_string(mac_type, resource, content_hash):
+    """Serializes mac_type and resource into a HAWK string."""
 
     normalized = [
         'hawk.' + str(HAWK_VER) + '.' + mac_type,
@@ -74,7 +74,7 @@ def normalize_string(mac_type, resource):
         normalize_header_attr(resource.name or ''),
         normalize_header_attr(resource.host),
         normalize_header_attr(resource.port),
-        normalize_header_attr(resource.content_hash or '')
+        normalize_header_attr(content_hash or '')
     ]
 
     # The blank lines are important. They follow what the Node Hawk lib does.
@@ -142,9 +142,7 @@ def parse_authorization_header(auth_header):
             value = value[0:-1]
 
         validate_header_attr(value, name=key)
-
         value = unescape_header_attr(value)
-
         attributes[key] = value
 
     log.debug('parsed Hawk header: {header} into: \n{parsed}'

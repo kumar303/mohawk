@@ -28,22 +28,21 @@ class HawkAuthority:
 
         now = utc_now(offset_in_seconds=localtime_offset_in_seconds)
 
-        check_hash = True
         if 'hash' not in parsed_header and accept_untrusted_content:
             # The request did not hash its content.
             log.debug('NOT calculating/verifiying payload hash '
                       '(no hash in header)')
             check_hash = False
+            content_hash = None
+        else:
+            check_hash = True
+            content_hash = resource.gen_content_hash()
 
         their_hash = parsed_header.get('hash', '')
         if check_hash and not their_hash:
-            log.debug('request unexpectedly did not hash its content')
+            log.info('request unexpectedly did not hash its content')
 
-        if not check_hash:
-            # This makes sure the mac is calculated without a hash.
-            resource.content_hash = None
-
-        mac = calculate_mac(mac_type, resource)
+        mac = calculate_mac(mac_type, resource, content_hash)
         if not strings_match(mac, parsed_header['mac']):
             raise MacMismatch('MACs do not match; ours: {ours}; '
                               'theirs: {theirs}'
@@ -155,28 +154,6 @@ class Resource:
         self.app = kw.pop('app', None)
         self.dlg = kw.pop('dlg', None)
 
-        if self.content is None or self.content_type is None:
-            if self.always_hash_content:
-                # Be really strict about allowing developers to skip content
-                # hashing. If they get this far they may be unintentiionally
-                # skipping it.
-                raise ValueError(
-                    'payload content and/or content_type cannot be '
-                    'empty without an explcit allowance')
-            log.debug('NOT hashing content')
-            hash_contents = False
-        else:
-            hash_contents = True
-
-        if hash_contents:
-            # TODO: defer content hashing for speed.
-            # We only need to generate a hash if the MAC check fails.
-            self.content_hash = calculate_payload_hash(
-                self.content, self.credentials['algorithm'],
-                self.content_type)
-        else:
-            self.content_hash = None
-
         self.timestamp = str(kw.pop('timestamp', None) or utc_now())
 
         self.nonce = kw.pop('nonce', None)
@@ -200,6 +177,30 @@ class Resource:
         if kw.keys():
             raise TypeError('Unknown keyword argument(s): {0}'
                             .format(kw.keys()))
+
+    @property
+    def content_hash(self):
+        if not hasattr(self, '_content_hash'):
+            raise AttributeError(
+                'Cannot access content_hash because it has not been generated')
+        return self._content_hash
+
+    def gen_content_hash(self):
+        if self.content is None or self.content_type is None:
+            if self.always_hash_content:
+                # Be really strict about allowing developers to skip content
+                # hashing. If they get this far they may be unintentiionally
+                # skipping it.
+                raise ValueError(
+                    'payload content and/or content_type cannot be '
+                    'empty without an explcit allowance')
+            log.debug('NOT hashing content')
+            self._content_hash = None
+        else:
+            self._content_hash = calculate_payload_hash(
+                self.content, self.credentials['algorithm'],
+                self.content_type)
+        return self.content_hash
 
     def parse_url(self, url):
         url_parts = urlparse(url)

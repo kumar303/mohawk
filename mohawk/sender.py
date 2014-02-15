@@ -42,7 +42,8 @@ class Sender(HawkAuthority):
                                      timestamp=_timestamp,
                                      content_type=content_type)
 
-        mac = calculate_mac('header', self.req_resource)
+        mac = calculate_mac('header', self.req_resource,
+                            self.req_resource.gen_content_hash())
         self.request_header = self._make_header(self.req_resource, mac)
 
     def accept_response(self,
