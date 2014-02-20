@@ -61,7 +61,7 @@ TODO
 Changelog
 ---------
 
-- **0.0.5** (unreleased)
+- **0.1.0** (2014-02-19)
 
   - Implemented optional content hashing per spec but in a less error prone way
   - Added complete documentation
