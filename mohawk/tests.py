@@ -79,6 +79,8 @@ class TestSender(Base):
 
     def receive(self, request_header, url=None, method='GET', **kw):
         credentials_map = kw.pop('credentials_map', self.credentials_map)
+        kw.setdefault('content', '')
+        kw.setdefault('content_type', '')
         kw.setdefault('seen_nonce', self.seen_nonce)
         return Receiver(credentials_map, request_header,
                         url or self.url, method, **kw)
@@ -359,6 +361,8 @@ class TestReceiver(Base):
             self.sender = Sender(self.credentials, sender_url, method,
                                  **sender_kw)
 
+        kw.setdefault('content', '')
+        kw.setdefault('content_type', '')
         self.receiver = Receiver(credentials_map,
                                  self.sender.request_header, url, method,
                                  **kw)
