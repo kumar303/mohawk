@@ -6,12 +6,12 @@ Using Mohawk
 
 There are two parties involved in `Hawk`_ communication: a
 :class:`sender <mohawk.Sender>` and a :class:`receiver <mohawk.Receiver>`.
-They use use a shared secret to sign and verify each other's messages.
+They use a shared secret to sign and verify each other's messages.
 
 **Sender**
     A client who wants to access a Hawk-protected resource.
-    The client will sign their request and when they receive a
-    response they will also verify the response signature.
+    The client will sign their request and upon
+    receiving a response will also verify the response signature.
 
 **Receiver**
     A server that uses Hawk to protect its resources. The server will check
@@ -90,7 +90,7 @@ like this:
 
 Notice how both the content and content-type values were signed by the Sender.
 In the case of a GET request you'll probably need to sign empty strings like
-``Sender(..., content='', content_type='')``,
+``Sender(..., 'GET', content='', content_type='')``,
 that is, if your request library doesn't
 automatically set a content-type for GET requests.
 
@@ -167,7 +167,7 @@ This provides you with a similar Hawk header to use in the response:
     'Hawk mac="...", hash="...="'
 
 Using your web server's framework, respond with a
-``Server-Authorization`` header, something like this:
+``Server-Authorization`` header. For example:
 
 .. doctest:: usage
 
@@ -209,11 +209,13 @@ the quantity of an item just purchased if it were a commerce API that had an
 ``increment-item`` service.
 
 Hawk protects against replay attacks in a couple ways. First, a receiver checks
-the timestamp of the message and if it has expired then it will reject the
-message. Second, every message includes a `cryptographic nonce`_
+the timestamp of the message which may result in a
+:class:`mohawk.exc.TokenExpired` exception.
+Second, every message includes a `cryptographic nonce`_
 which is a unique
 identifier. In combination with the timestamp, a receiver can use the nonce to
-know if it has *already* received the request. If so, it will reject it.
+know if it has *already* received the request. If so,
+the :class:`mohawk.exc.AlreadyProcessed` exception is raised.
 
 By default, Mohawk doesn't know how to check nonce values; this is something
 your application needs to do.
@@ -261,7 +263,8 @@ When a *sender* calls :meth:`mohawk.Sender.accept_response`, it will receive
 a Hawk message but the nonce will be that of the original request.
 This generally means you don't have to worry about *response* replay attacks.
 However, if you
-expose your ``acccept_response()`` call somewhere publicly over HTTP then you
+expose your :meth:`mohawk.Sender.accept_response` call
+somewhere publicly over HTTP then you
 may wish to protect against response replay attacks.
 You can do so by constructing a :class:`mohawk.Sender` with
 the same ``seen_nonce`` keyword:
@@ -312,7 +315,7 @@ Now you'll get an ``Authorization`` header without a ``hash`` attribute:
     'Hawk mac="...", id="some-sender", ts="...", nonce="..."'
 
 The :class:`mohawk.Receiver` must also be constructed to
-accept unsigned content, like this:
+accept unsigned content with ``accept_untrusted_content=True``:
 
 .. doctest:: usage
 
@@ -330,7 +333,7 @@ channels stem from ``mohawk``. For example, the ``mohawk.receiver``
 channel will just contain receiver messages. These channels correspond
 to the submodules within mohawk.
 
-To debug :class:`mohawk.exc.MacMismatch` exceptions
+To debug :class:`mohawk.exc.MacMismatch` :ref:`exceptions`
 and other authorization errors, set the ``mohawk`` channel to ``DEBUG``.
 
 Going further

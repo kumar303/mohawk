@@ -53,9 +53,10 @@ class TokenExpired(HawkFail):
         The `Hawk`_ spec mentions how you can synchronize
         your sender's time with the receiver in the case
         of unexpected expiration. However, do not expose a local
-        timestamp in the raw since it can potentially be used for an attack.
+        timestamp in the raw to a sender over HTTP since
+        it can potentially be used for an attack.
         See the Hawk Node lib for an example of HMAC'ing the
-        timestamp for comparison.
+        timestamp to send to clients.
 
     .. _`Hawk`: https://github.com/hueniverse/hawk
     """
