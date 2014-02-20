@@ -29,7 +29,8 @@ Here are some additional security considerations:
 * Consider :ref:`nonce`.
 * Hawk lets you verify that you're talking to the person you think you are.
   In a lot of ways, this is more trustworthy than SSL/TLS but to guard
-  against your own `stupidity`_ you should probably use both HTTPS and Hawk.
+  against your own `stupidity`_ as well as prevent general eavesdropping,
+  you should probably use both HTTPS and Hawk.
 * The `Hawk`_ spec says that signing request/response content is *optional*
   but just for extra paranoia, Mohawk
   raises an exception if you skip content checks without knowing it.
