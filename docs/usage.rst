@@ -29,9 +29,9 @@ section.
 
 .. testsetup:: usage
 
-    class Request:
+    class Requests:
         def post(self, *a, **kw): pass
-    request = Request()
+    requests = Requests()
 
     credentials = {'id': 'some-sender',
                    'key': 'some complicated SEKRET',
@@ -84,9 +84,9 @@ like this:
 
  .. doctest:: usage
 
-    >>> request.post(url, data=content,
-    ...              headers={'Authorization': sender.request_header,
-    ...                       'Content-Type': content_type})
+    >>> requests.post(url, data=content,
+    ...               headers={'Authorization': sender.request_header,
+    ...                        'Content-Type': content_type})
 
 Notice how both the content and content-type values were signed by the Sender.
 In the case of a GET request you'll probably need to sign empty strings like
