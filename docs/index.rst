@@ -57,6 +57,20 @@ Topics
    developers
    why
 
+Framework integration
+=====================
+
+Mohawk is a low level library that focuses on Hawk communication.
+The following higher-level libraries integrate Mohawk
+into specific web frameworks:
+
+* `Hawkrest`_: adds Hawk to `Django Rest Framework`_
+* Did we miss one? Send a `pull request`_ so we can link to it.
+
+.. _`Hawkrest`: http://hawkrest.readthedocs.org/
+.. _`Django Rest Framework`: http://django-rest-framework.org/
+.. _`pull request`: https://github.com/kumar303/mohawk
+
 TODO
 ====
 
