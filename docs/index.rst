@@ -91,7 +91,7 @@ TODO
 Changelog
 ---------
 
-- **0.2.0** (unreleased)
+- **0.2.0** (2014-03-03)
 
   - Added support for Python 3.3 or greater.
   - Added support for Python 2.6 (this was just a test suite fix).
