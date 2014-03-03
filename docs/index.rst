@@ -91,6 +91,11 @@ TODO
 Changelog
 ---------
 
+- **0.2.1** (2014-03-03)
+
+  - Fixed Python 2 bug in how unicode was converted to bytes
+    when calculating a payload hash.
+
 - **0.2.0** (2014-03-03)
 
   - Added support for Python 3.3 or greater.

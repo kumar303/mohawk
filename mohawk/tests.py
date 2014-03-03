@@ -179,8 +179,13 @@ class TestSender(Base):
 
     @raises(MacMismatch)
     def test_tamper_with_content(self):
-        sn = self.Sender(method='POST')
+        sn = self.Sender()
         self.receive(sn.request_header, content='stuff=nope')
+
+    def test_non_ascii_content(self):
+        content = u'Ivan Kristi\u0107'
+        sn = self.Sender(content=content)
+        self.receive(sn.request_header, content=content)
 
     @raises(MacMismatch)
     def test_tamper_with_content_type(self):

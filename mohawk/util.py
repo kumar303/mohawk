@@ -49,14 +49,15 @@ def calculate_payload_hash(payload, algorithm, content_type):
     parts.append(payload or '')
     parts.append('\n')
 
-    log.debug('calculating payload hash from:\n{parts}'
-              .format(parts=pprint.pformat(parts)))
-
-    for p in parts:
+    for i, p in enumerate(parts):
         # Make sure we are about to hash binary strings.
         if not isinstance(p, six.binary_type):
-            p = six.binary_type(p, 'utf8')
+            p = p.encode('utf8')
         p_hash.update(p)
+        parts[i] = p
+
+    log.debug('calculating payload hash from:\n{parts}'
+              .format(parts=pprint.pformat(parts)))
 
     return b64encode(p_hash.digest())
 
