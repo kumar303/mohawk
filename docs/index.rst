@@ -10,6 +10,10 @@ Mohawk
 Mohawk is an alternate Python implementation of the
 `Hawk HTTP authorization scheme`_.
 
+.. image:: https://travis-ci.org/kumar303/mohawk.png?branch=master
+    :target: https://travis-ci.org/kumar303/mohawk
+
+
 Hawk lets two parties securely communicate with each other using
 messages signed by a shared key.
 It is based on `HTTP MAC access authentication`_ (which
@@ -26,7 +30,12 @@ problems, and more Pythonic.
 Installation
 ============
 
-Using `pip`_ and Python >= 2.7::
+Requirements:
+
+* Python 2.6+ or 3.3+
+* `six`_
+
+Using `pip`_::
 
     pip install mohawk
 
@@ -82,6 +91,15 @@ TODO
 Changelog
 ---------
 
+- **0.2.0** (unreleased)
+
+  - Added support for Python 3.3 or greater.
+  - Added support for Python 2.6 (this was just a test suite fix).
+  - Added `six`_ as dependency.
+  - :attr:`mohawk.Sender.request_header` and
+    :attr:`mohawk.Receiver.response_header` are now Unicode objects.
+    They will never contain non-ascii characters though.
+
 - **0.1.0** (2014-02-19)
 
   - Implemented optional content hashing per spec but in a less error prone way
@@ -111,6 +129,7 @@ Changelog
 
   - initial release of partial implementation
 
+.. _six: https://pypi.python.org/pypi/six
 
 Indices and tables
 ==================
@@ -118,4 +137,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

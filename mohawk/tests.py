@@ -1,7 +1,8 @@
+import sys
 from unittest import TestCase
 
 import mock
-from nose.tools import eq_
+from nose.tools import eq_, raises
 
 from . import Receiver, Sender
 from .exc import (AlreadyProcessed,
@@ -41,27 +42,27 @@ class Base(TestCase):
 
 class TestConfig(Base):
 
+    @raises(InvalidCredentials)
     def test_no_id(self):
         c = self.credentials.copy()
         del c['id']
-        with self.assertRaises(InvalidCredentials):
-            validate_credentials(c)
+        validate_credentials(c)
 
+    @raises(InvalidCredentials)
     def test_no_key(self):
         c = self.credentials.copy()
         del c['key']
-        with self.assertRaises(InvalidCredentials):
-            validate_credentials(c)
+        validate_credentials(c)
 
+    @raises(InvalidCredentials)
     def test_no_algo(self):
         c = self.credentials.copy()
         del c['algorithm']
-        with self.assertRaises(InvalidCredentials):
-            validate_credentials(c)
+        validate_credentials(c)
 
+    @raises(InvalidCredentials)
     def test_no_credentials(self):
-        with self.assertRaises(InvalidCredentials):
-            validate_credentials(None)
+        validate_credentials(None)
 
 
 class TestSender(Base):
@@ -119,9 +120,9 @@ class TestSender(Base):
         self.receive(sn.request_header, method=method, content=content,
                      content_type='application/json; charset=other')
 
+    @raises(ValueError)
     def test_missing_payload_details(self):
-        with self.assertRaises(ValueError):
-            self.Sender(method='POST', content=None, content_type=None)
+        self.Sender(method='POST', content=None, content_type=None)
 
     def test_skip_payload_hashing(self):
         method = 'POST'
@@ -133,59 +134,60 @@ class TestSender(Base):
                      content_type=content_type,
                      accept_untrusted_content=True)
 
+    @raises(ValueError)
     def test_cannot_skip_content_only(self):
-        with self.assertRaises(ValueError):
-            self.Sender(method='POST', content=None,
-                        content_type='application/json')
+        self.Sender(method='POST', content=None,
+                    content_type='application/json')
 
+    @raises(ValueError)
     def test_cannot_skip_content_type_only(self):
-        with self.assertRaises(ValueError):
-            self.Sender(method='POST', content='{"foo": "bar"}',
-                        content_type=None)
+        self.Sender(method='POST', content='{"foo": "bar"}',
+                    content_type=None)
 
+    @raises(MacMismatch)
     def test_tamper_with_host(self):
         sn = self.Sender()
-        with self.assertRaises(MacMismatch):
-            self.receive(sn.request_header, url='http://TAMPERED-WITH.com')
+        self.receive(sn.request_header, url='http://TAMPERED-WITH.com')
 
+    @raises(MacMismatch)
     def test_tamper_with_method(self):
         sn = self.Sender(method='GET')
-        with self.assertRaises(MacMismatch):
-            self.receive(sn.request_header, method='POST')
+        self.receive(sn.request_header, method='POST')
 
+    @raises(MacMismatch)
     def test_tamper_with_path(self):
         sn = self.Sender()
-        with self.assertRaises(MacMismatch):
-            self.receive(sn.request_header,
-                         url='http://site.com/TAMPERED?bar=1')
+        self.receive(sn.request_header,
+                     url='http://site.com/TAMPERED?bar=1')
 
+    @raises(MacMismatch)
     def test_tamper_with_query(self):
         sn = self.Sender()
-        with self.assertRaises(MacMismatch):
-            self.receive(sn.request_header,
-                         url='http://site.com/foo?bar=TAMPERED')
+        self.receive(sn.request_header,
+                     url='http://site.com/foo?bar=TAMPERED')
 
+    @raises(MacMismatch)
     def test_tamper_with_scheme(self):
         sn = self.Sender()
-        with self.assertRaises(MacMismatch):
-            self.receive(sn.request_header, url='https://site.com/foo?bar=1')
+        self.receive(sn.request_header, url='https://site.com/foo?bar=1')
 
+    @raises(MacMismatch)
     def test_tamper_with_port(self):
         sn = self.Sender()
-        with self.assertRaises(MacMismatch):
-            self.receive(sn.request_header,
-                         url='http://site.com:8000/foo?bar=1')
+        self.receive(sn.request_header,
+                     url='http://site.com:8000/foo?bar=1')
 
+    @raises(MacMismatch)
     def test_tamper_with_content(self):
         sn = self.Sender(method='POST')
-        with self.assertRaises(MacMismatch):
-            self.receive(sn.request_header, content='stuff=nope')
+        self.receive(sn.request_header, content='stuff=nope')
 
+    @raises(MacMismatch)
     def test_tamper_with_content_type(self):
         sn = self.Sender(method='POST')
-        with self.assertRaises(MacMismatch):
-            self.receive(sn.request_header, content_type='application/json')
+        self.receive(sn.request_header, content_type='application/json')
 
+    @raises(AlreadyProcessed)
     def test_nonce_fail(self):
 
         def seen_nonce(nonce, ts):
@@ -193,9 +195,7 @@ class TestSender(Base):
 
         sn = self.Sender()
 
-        with self.assertRaises(AlreadyProcessed):
-            self.receive(sn.request_header,
-                         seen_nonce=seen_nonce)
+        self.receive(sn.request_header, seen_nonce=seen_nonce)
 
     def test_nonce_ok(self):
 
@@ -205,23 +205,27 @@ class TestSender(Base):
         sn = self.Sender(seen_nonce=seen_nonce)
         self.receive(sn.request_header)
 
+    @raises(TokenExpired)
     def test_expired_ts(self):
         now = utc_now() - 120
         sn = self.Sender(_timestamp=now)
-        with self.assertRaises(TokenExpired):
-            self.receive(sn.request_header)
+        self.receive(sn.request_header)
 
     def test_expired_exception_reports_localtime(self):
         now = utc_now()
         ts = now - 120
         sn = self.Sender(_timestamp=ts)  # force expiry
 
+        exc = None
         with mock.patch('mohawk.base.utc_now') as fake_now:
             fake_now.return_value = now
-            with self.assertRaises(TokenExpired) as exc:
+            try:
                 self.receive(sn.request_header)
+            except:
+                etype, exc, tb = sys.exc_info()
 
-        eq_(exc.exception.localtime_in_seconds, now)
+        eq_(type(exc), TokenExpired)
+        eq_(exc.localtime_in_seconds, now)
 
     def test_localtime_offset(self):
         now = utc_now() - 120
@@ -235,12 +239,13 @@ class TestSender(Base):
         # Without an offset this will raise an expired exception.
         self.receive(sn.request_header, timestamp_skew_in_seconds=120)
 
+    @raises(MisComputedContentHash)
     def test_hash_tampering(self):
         sn = self.Sender()
         header = sn.request_header.replace('hash="', 'hash="nope')
-        with self.assertRaises(MisComputedContentHash):
-            self.receive(header)
+        self.receive(header)
 
+    @raises(MacMismatch)
     def test_bad_secret(self):
         cfg = {
             'id': 'my-hawk-id',
@@ -248,40 +253,39 @@ class TestSender(Base):
             'algorithm': 'sha256',
         }
         sn = self.Sender(credentials=cfg)
-        with self.assertRaises(MacMismatch):
-            self.receive(sn.request_header)
+        self.receive(sn.request_header)
 
+    @raises(MacMismatch)
     def test_unexpected_algorithm(self):
         cr = self.credentials.copy()
         cr['algorithm'] = 'sha512'
         sn = self.Sender(credentials=cr)
 
-        with self.assertRaises(MacMismatch):
-            # Validate with a credentials using sha256.
-            self.receive(sn.request_header)
+        # Validate with mismatched credentials (sha256).
+        self.receive(sn.request_header)
 
+    @raises(InvalidCredentials)
     def test_invalid_credentials(self):
         cfg = self.credentials.copy()
         # Create an invalid credentials.
         del cfg['algorithm']
 
-        with self.assertRaises(InvalidCredentials):
-            self.Sender(credentials=cfg)
+        self.Sender(credentials=cfg)
 
+    @raises(CredentialsLookupError)
     def test_unknown_id(self):
         cr = self.credentials.copy()
         cr['id'] = 'someone-else'
         sn = self.Sender(credentials=cr)
 
-        with self.assertRaises(CredentialsLookupError):
-            self.receive(sn.request_header)
+        self.receive(sn.request_header)
 
+    @raises(MacMismatch)
     def test_bad_ext(self):
         sn = self.Sender(ext='my external data')
 
         header = sn.request_header.replace('my external data', 'TAMPERED')
-        with self.assertRaises(MacMismatch):
-            self.receive(header)
+        self.receive(header)
 
     def test_ext_with_quotes(self):
         sn = self.Sender(ext='quotes=""')
@@ -295,17 +299,20 @@ class TestSender(Base):
         parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['ext'], "new line \n in the middle")
 
+    @raises(BadHeaderValue)
     def test_ext_with_illegal_chars(self):
-        with self.assertRaises(BadHeaderValue):
-            self.Sender(ext="something like \t is illegal")
+        self.Sender(ext="something like \t is illegal")
 
+    @raises(BadHeaderValue)
     def test_ext_with_illegal_unicode(self):
-        with self.assertRaises(BadHeaderValue):
-            self.Sender(ext=u'Ivan Kristi\u0107')
+        self.Sender(ext=u'Ivan Kristi\u0107')
 
+    @raises(BadHeaderValue)
     def test_ext_with_illegal_utf8(self):
-        with self.assertRaises(BadHeaderValue):
-            self.Sender(ext=u'Ivan Kristi\u0107'.encode('utf8'))
+        # This isn't allowed because the escaped byte chars are out of
+        # range. It's a little odd but this is what the Node lib does
+        # implicitly with its regex.
+        self.Sender(ext=u'Ivan Kristi\u0107'.encode('utf8'))
 
     def test_app_ok(self):
         app = 'custom-app'
@@ -314,12 +321,12 @@ class TestSender(Base):
         parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['app'], app)
 
+    @raises(MacMismatch)
     def test_tampered_app(self):
         app = 'custom-app'
         sn = self.Sender(app=app)
         header = sn.request_header.replace(app, 'TAMPERED-WITH')
-        with self.assertRaises(MacMismatch):
-            self.receive(header)
+        self.receive(header)
 
     def test_dlg_ok(self):
         dlg = 'custom-dlg'
@@ -328,12 +335,12 @@ class TestSender(Base):
         parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['dlg'], dlg)
 
+    @raises(MacMismatch)
     def test_tampered_dlg(self):
         dlg = 'custom-dlg'
         sn = self.Sender(dlg=dlg, app='some-app')
         header = sn.request_header.replace(dlg, 'TAMPERED-WITH')
-        with self.assertRaises(MacMismatch):
-            self.receive(header)
+        self.receive(header)
 
 
 class TestReceiver(Base):
@@ -380,10 +387,10 @@ class TestReceiver(Base):
 
         return receiver.response_header
 
+    @raises(InvalidCredentials)
     def test_invalid_credentials_lookup(self):
-        with self.assertRaises(InvalidCredentials):
-            # Return invalid credentials.
-            self.receive(credentials_map=lambda *a: {})
+        # Return invalid credentials.
+        self.receive(credentials_map=lambda *a: {})
 
     def test_get_ok(self):
         method = 'GET'
@@ -395,45 +402,45 @@ class TestReceiver(Base):
         self.receive(method=method)
         self.respond()
 
+    @raises(MacMismatch)
     def test_respond_with_wrong_content(self):
         self.receive()
-        with self.assertRaises(MacMismatch):
-            self.respond(content='real content',
-                         accept_kw=dict(content='TAMPERED WITH'))
+        self.respond(content='real content',
+                     accept_kw=dict(content='TAMPERED WITH'))
 
+    @raises(MacMismatch)
     def test_respond_with_wrong_content_type(self):
         self.receive()
-        with self.assertRaises(MacMismatch):
-            self.respond(content_type='text/html',
-                         accept_kw=dict(content_type='application/json'))
+        self.respond(content_type='text/html',
+                     accept_kw=dict(content_type='application/json'))
 
+    @raises(MacMismatch)
     def test_respond_with_wrong_url(self):
         self.receive(url='http://fakesite.com')
         wrong_receiver = self.receiver
 
         self.receive(url='http://realsite.com')
 
-        with self.assertRaises(MacMismatch):
-            self.respond(receiver=wrong_receiver)
+        self.respond(receiver=wrong_receiver)
 
+    @raises(MacMismatch)
     def test_respond_with_wrong_method(self):
         self.receive(method='GET')
         wrong_receiver = self.receiver
 
         self.receive(method='POST')
 
-        with self.assertRaises(MacMismatch):
-            self.respond(receiver=wrong_receiver)
+        self.respond(receiver=wrong_receiver)
 
+    @raises(MacMismatch)
     def test_respond_with_wrong_nonce(self):
         self.receive(sender_kw=dict(nonce='another-nonce'))
         wrong_receiver = self.receiver
 
         self.receive()
 
-        with self.assertRaises(MacMismatch):
-            # The nonce must match the one sent in the original request.
-            self.respond(receiver=wrong_receiver)
+        # The nonce must match the one sent in the original request.
+        self.respond(receiver=wrong_receiver)
 
     def test_respond_with_unhashed_content(self):
         self.receive()
@@ -442,15 +449,14 @@ class TestReceiver(Base):
                      content_type=None,
                      accept_kw=dict(accept_untrusted_content=True))
 
+    @raises(TokenExpired)
     def test_respond_with_expired_ts(self):
         self.receive()
         hdr = self.receiver.respond(content='', content_type='')
 
         with mock.patch('mohawk.base.utc_now') as fn:
             fn.return_value = 0  # force an expiry
-
-            with self.assertRaises(TokenExpired):
-                self.sender.accept_response(hdr, content='', content_type='')
+            self.sender.accept_response(hdr, content='', content_type='')
 
     def test_respond_with_bad_ts_skew_ok(self):
         now = utc_now() - 120
@@ -473,6 +479,7 @@ class TestReceiver(Base):
         header = parse_authorization_header(self.receiver.response_header)
         eq_(header['ext'], ext)
 
+    @raises(MacMismatch)
     def test_respond_with_wrong_app(self):
         self.receive(sender_kw=dict(app='TAMPERED-WITH', dlg='delegation'))
         self.receiver.respond(content='', content_type='')
@@ -480,10 +487,10 @@ class TestReceiver(Base):
 
         self.receive(sender_kw=dict(app='real-app', dlg='delegation'))
 
-        with self.assertRaises(MacMismatch):
-            self.sender.accept_response(wrong_receiver.response_header,
-                                        content='', content_type='')
+        self.sender.accept_response(wrong_receiver.response_header,
+                                    content='', content_type='')
 
+    @raises(MacMismatch)
     def test_respond_with_wrong_dlg(self):
         self.receive(sender_kw=dict(app='app', dlg='TAMPERED-WITH'))
         self.receiver.respond(content='', content_type='')
@@ -491,62 +498,55 @@ class TestReceiver(Base):
 
         self.receive(sender_kw=dict(app='app', dlg='real-dlg'))
 
-        with self.assertRaises(MacMismatch):
-            self.sender.accept_response(wrong_receiver.response_header,
-                                        content='', content_type='')
+        self.sender.accept_response(wrong_receiver.response_header,
+                                    content='', content_type='')
 
+    @raises(MacMismatch)
     def test_receive_wrong_method(self):
         self.receive(method='GET')
         wrong_sender = self.sender
+        self.receive(method='POST', sender=wrong_sender)
 
-        with self.assertRaises(MacMismatch):
-            self.receive(method='POST',
-                         sender=wrong_sender)
-
+    @raises(MacMismatch)
     def test_receive_wrong_url(self):
         self.receive(url='http://fakesite.com/')
         wrong_sender = self.sender
+        self.receive(url='http://realsite.com/', sender=wrong_sender)
 
-        with self.assertRaises(MacMismatch):
-            self.receive(url='http://realsite.com/',
-                         sender=wrong_sender)
-
+    @raises(MacMismatch)
     def test_receive_wrong_content(self):
         self.receive(sender_kw=dict(content='real request'),
                      content='real request')
         wrong_sender = self.sender
+        self.receive(content='TAMPERED WITH', sender=wrong_sender)
 
-        with self.assertRaises(MacMismatch):
-            self.receive(content='TAMPERED WITH',
-                         sender=wrong_sender)
-
+    @raises(MacMismatch)
     def test_unexpected_unhashed_content(self):
-        with self.assertRaises(MacMismatch):
-            self.receive(sender_kw=dict(content=None, content_type=None,
-                                        always_hash_content=False))
+        self.receive(sender_kw=dict(content=None, content_type=None,
+                                    always_hash_content=False))
 
+    @raises(ValueError)
     def test_cannot_receive_empty_content_only(self):
         content_type = 'text/plain'
-        with self.assertRaises(ValueError):
-            self.receive(sender_kw=dict(content='<content>',
-                                        content_type=content_type),
-                         content=None, content_type=content_type)
+        self.receive(sender_kw=dict(content='<content>',
+                                    content_type=content_type),
+                     content=None, content_type=content_type)
 
+    @raises(ValueError)
     def test_cannot_receive_empty_content_type_only(self):
         content = '<content>'
-        with self.assertRaises(ValueError):
-            self.receive(sender_kw=dict(content=content,
-                                        content_type='text/plain'),
-                         content=content, content_type=None)
+        self.receive(sender_kw=dict(content=content,
+                                    content_type='text/plain'),
+                     content=content, content_type=None)
 
+    @raises(MacMismatch)
     def test_receive_wrong_content_type(self):
         self.receive(sender_kw=dict(content_type='text/html'),
                      content_type='text/html')
         wrong_sender = self.sender
 
-        with self.assertRaises(MacMismatch):
-            self.receive(content_type='application/json',
-                         sender=wrong_sender)
+        self.receive(content_type='application/json',
+                     sender=wrong_sender)
 
 
 class TestSendAndReceive(Base):

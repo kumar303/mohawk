@@ -77,7 +77,7 @@ with your request:
 .. doctest:: usage
 
     >>> sender.request_header
-    'Hawk mac="...", hash="...", id="some-sender", ts="...", nonce="..."'
+    u'Hawk mac="...", hash="...", id="some-sender", ts="...", nonce="..."'
 
 Using the `requests`_ library just as an example, you would send your POST
 like this:
@@ -164,7 +164,7 @@ This provides you with a similar Hawk header to use in the response:
 .. doctest:: usage
 
     >>> receiver.response_header
-    'Hawk mac="...", hash="...="'
+    u'Hawk mac="...", hash="...="'
 
 Using your web server's framework, respond with a
 ``Server-Authorization`` header. For example:
@@ -312,7 +312,7 @@ Now you'll get an ``Authorization`` header without a ``hash`` attribute:
 .. doctest:: usage
 
     >>> sender.request_header
-    'Hawk mac="...", id="some-sender", ts="...", nonce="..."'
+    u'Hawk mac="...", id="some-sender", ts="...", nonce="..."'
 
 The :class:`mohawk.Receiver` must also be constructed to
 accept unsigned content with ``accept_untrusted_content=True``:

@@ -1,7 +1,8 @@
 import logging
 import math
 import pprint
-from urlparse import urlparse
+
+from six.moves.urllib.parse import urlparse
 
 from .exc import (AlreadyProcessed,
                   MacMismatch,
@@ -128,10 +129,6 @@ class HawkAuthority:
         if 'dlg' in keys and resource.dlg:
             header = u'{header}, dlg="{dlg}"'.format(
                 header=header, dlg=prepare_header_val(resource.dlg))
-
-        # Use UTF8 for sanity even though the validator (currently)
-        # rejects non-ascii.
-        header = header.encode('utf8')
 
         log.debug('Hawk header for URL={url} method={method}: {header}'
                   .format(url=resource.url, method=resource.method,

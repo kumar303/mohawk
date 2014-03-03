@@ -7,7 +7,10 @@ import math
 import os
 import pprint
 import re
+import sys
 import time
+
+import six
 
 from .exc import BadHeaderValue, HawkFail, InvalidCredentials
 
@@ -23,8 +26,10 @@ def validate_credentials(creds):
         creds['id']
         creds['key']
         creds['algorithm']
-    except KeyError, exc:
-        raise InvalidCredentials('{0.__class__.__name__}: {0}'.format(exc))
+    except KeyError:
+        etype, val, tb = sys.exc_info()
+        raise InvalidCredentials('{etype}: {val}'
+                                 .format(etype=etype, val=val))
 
 
 def random_string(length):
@@ -48,6 +53,9 @@ def calculate_payload_hash(payload, algorithm, content_type):
               .format(parts=pprint.pformat(parts)))
 
     for p in parts:
+        # Make sure we are about to hash binary strings.
+        if not isinstance(p, six.binary_type):
+            p = six.binary_type(p, 'utf8')
         p_hash.update(p)
 
     return b64encode(p_hash.digest())
@@ -56,10 +64,19 @@ def calculate_payload_hash(payload, algorithm, content_type):
 def calculate_mac(mac_type, resource, content_hash):
     """Calculates a message authorization code (MAC)."""
     normalized = normalize_string(mac_type, resource, content_hash)
-    log.debug('normalized resource for mac calc: {norm}'
+    log.debug(u'normalized resource for mac calc: {norm}'
               .format(norm=normalized))
     digestmod = getattr(hashlib, resource.credentials['algorithm'])
-    result = hmac.new(resource.credentials['key'], normalized, digestmod)
+
+    # Make sure we are about to hash binary strings.
+
+    if not isinstance(normalized, six.binary_type):
+        normalized = normalized.encode('utf8')
+    key = resource.credentials['key']  # e.g. 'sha256'
+    if not isinstance(key, six.binary_type):
+        key = key.encode('ascii')
+
+    result = hmac.new(key, normalized, digestmod)
     return b64encode(result.digest())
 
 
@@ -112,6 +129,11 @@ def parse_authorization_header(auth_header):
                       'ext', 'mac', 'app', 'dlg']
 
     attributes = {}
+
+    # Make sure we have a unicode object for consistency.
+    if isinstance(auth_header, six.binary_type):
+        auth_header = auth_header.decode('utf8')
+
     parts = auth_header.split(',')
     auth_scheme_parts = parts[0].split(' ')
     if not 'hawk' == auth_scheme_parts[0].lower():
@@ -155,8 +177,18 @@ def strings_match(a, b):
     if len(a) != len(b):
         return False
     result = 0
-    for x, y in zip(a, b):
-        result |= ord(x) ^ ord(y)
+
+    def byte_ints(buf):
+        for ch in buf:
+            # In Python 3, if we have a bytes object, iterating it will
+            # already get the integer value. In older pythons, we need
+            # to use ord().
+            if not isinstance(ch, int):
+                ch = ord(ch)
+            yield ch
+
+    for x, y in zip(byte_ints(a), byte_ints(b)):
+        result |= x ^ y
     return result == 0
 
 
@@ -169,7 +201,10 @@ def utc_now(offset_in_seconds=0.0):
 # Allowed value characters:
 # !#$%&'()*+,-./:;<=>?@[]^_`{|}~ and space, a-z, A-Z, 0-9, \, "
 _header_attribute_chars = re.compile(
-    r"^[ \w\!#\$%&'\(\)\*\+,\-\./\:;<\=>\?@\[\]\^`\{\|\}~\"\\]*$")
+    r"^[ \w\!#\$%&'\(\)\*\+,\-\./\:;<\=>\?@\[\]\^`\{\|\}~\"\\]*$",
+    # Here we want to make sure non-ascii chars are excluded from headers per
+    # the Node lib.
+    re.LOCALE)
 
 
 def validate_header_attr(val, name=None):
@@ -180,8 +215,14 @@ def validate_header_attr(val, name=None):
 
 
 def escape_header_attr(val):
+
+    # Ensure we are working with Unicode for consistency.
+    if isinstance(val, six.binary_type):
+        val = val.decode('utf8')
+
     # Escape quotes and slash like the hawk reference code.
-    val = val.replace('\\', '\\\\').replace('"', '\\"')
+    val = val.replace('\\', '\\\\')
+    val = val.replace('"', '\\"')
     val = val.replace('\n', '\\n')
     return val
 
@@ -202,12 +243,6 @@ def prepare_header_val(val):
 def normalize_header_attr(val):
     if not val:
         val = ''
-
-    # Ensure we are working with Unicode for sanity. Note that non-ascii is not
-    # allowed but that's caught later on.
-    if isinstance(val, str):
-        val = val.decode('utf8')
-    val = val.encode('utf8')
 
     # Normalize like the hawk reference code.
     val = escape_header_attr(val)

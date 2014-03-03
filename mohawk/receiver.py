@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from .base import default_ts_skew_in_seconds, HawkAuthority, Resource
 from .exc import CredentialsLookupError
@@ -82,8 +83,9 @@ class Receiver(HawkAuthority):
 
         try:
             credentials = self.credentials_map(parsed_header['id'])
-        except LookupError, exc:
-            log.debug('Catching {0.__class__.__name__}: {0}'.format(exc))
+        except LookupError:
+            etype, val, tb = sys.exc_info()
+            log.debug('Catching {etype}: {val}'.format(etype=etype, val=val))
             raise CredentialsLookupError(
                 'Could not find credentials for ID {0}'
                 .format(parsed_header['id']))
