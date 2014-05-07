@@ -10,6 +10,7 @@ from .exc import (AlreadyProcessed,
                   TokenExpired)
 from .util import (calculate_mac,
                    calculate_payload_hash,
+                   calculate_ts_mac,
                    prepare_header_val,
                    random_string,
                    strings_match,
@@ -81,10 +82,15 @@ class HawkAuthority:
         their_ts = int(their_timestamp or parsed_header['ts'])
 
         if math.fabs(their_ts - now) > timestamp_skew_in_seconds:
-            raise TokenExpired('token with UTC timestamp {ts} has expired; '
-                               'compared to {now}'
-                               .format(ts=their_ts, now=now),
-                               localtime_in_seconds=now)
+            message = ('token with UTC timestamp {ts} has expired; '
+                       'compared to {now}'
+                       .format(ts=their_ts, now=now))
+            tsm = calculate_ts_mac(now, resource.credentials)
+            www_authenticate = ('Hawk ts="{ts}", tsm="{tsm}", error="{error}"'
+                                .format(ts=now, tsm=tsm, error=message))
+            raise TokenExpired(message,
+                               localtime_in_seconds=now,
+                               www_authenticate=www_authenticate)
 
         log.debug('authorized OK')
 
