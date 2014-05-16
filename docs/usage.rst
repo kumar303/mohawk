@@ -225,13 +225,13 @@ your application needs to do.
     If you don't configure nonce checking, your application could be
     susceptible to replay attacks.
 
-Make a callable that returns True if a nonce and timestamp have been
-seen or not. Here is an example using something like memcache:
+Make a callable that returns True if a nonce plus its timestamp has been
+seen already. Here is an example using something like memcache:
 
 .. doctest:: usage
 
     >>> def seen_nonce(nonce, timestamp):
-    ...     key = '{n}:{ts}'.format(n=nonce, ts=timestamp)
+    ...     key = '{nonce}:{ts}'.format(nonce=nonce, ts=timestamp)
     ...     if memcache.get(key):
     ...         # We have already processed this nonce + timestamp.
     ...         return True
