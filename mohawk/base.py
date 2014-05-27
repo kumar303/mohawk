@@ -190,7 +190,7 @@ class Resource:
                 # skipping it.
                 raise ValueError(
                     'payload content and/or content_type cannot be '
-                    'empty without an explcit allowance')
+                    'empty without an explicit allowance')
             log.debug('NOT hashing content')
             self._content_hash = None
         else:
