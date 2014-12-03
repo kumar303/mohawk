@@ -304,6 +304,12 @@ class TestSender(Base):
         parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['ext'], "new line \n in the middle")
 
+    def test_ext_with_equality_sign(self):
+        sn = self.Sender(ext="foo=bar")
+        self.receive(sn.request_header)
+        parsed = parse_authorization_header(sn.request_header)
+        eq_(parsed['ext'], "foo=bar")
+
     @raises(BadHeaderValue)
     def test_ext_with_illegal_chars(self):
         self.Sender(ext="something like \t is illegal")
