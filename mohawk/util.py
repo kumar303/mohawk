@@ -145,24 +145,21 @@ def parse_authorization_header(auth_header):
     parts[0] = auth_scheme_parts[1]
 
     for part in parts:
-        attr_parts = part.split('=')
+        # Make sure to only split from the left for the first '=' char, otherwise
+        # values can get messed up. Ex: ext="something='other'"
+        attr_parts = part.split('=', 1)
         key = attr_parts[0].strip()
         if key not in allowable_keys:
             raise HawkFail("Unknown Hawk key_" + attr_parts[0] + "_")
 
-        # TODO we don't do a good job of parsing, '=' should work for more =.
-        # hash or mac value includes '=' character... fixup
-        if len(attr_parts) == 3:
-            attr_parts[1] += '=' + attr_parts[2]
-
         # Chop of quotation marks
+        # Can't use strip here due to ext data possibly containing value 
+        # enclosing chars. Ex: ext="foo=\"bar\""
         value = attr_parts[1]
-
-        if attr_parts[1].find('"') == 0:
-            value = attr_parts[1][1:]
-
-        if value.find('"') > -1:
-            value = value[0:-1]
+        if value.startswith('"'):
+            value = value[1:]
+        if value.endswith('"'):
+            value = value[:-1]
 
         validate_header_attr(value, name=key)
         value = unescape_header_attr(value)

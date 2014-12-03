@@ -1,4 +1,5 @@
 import sys
+import json
 from unittest import TestCase
 
 import mock
@@ -14,7 +15,8 @@ from .exc import (AlreadyProcessed,
                   TokenExpired)
 from .util import (parse_authorization_header,
                    utc_now,
-                   validate_credentials)
+                   validate_credentials,
+                   calculate_payload_hash)
 
 
 class Base(TestCase):
@@ -598,3 +600,38 @@ class TestSendAndReceive(Base):
         sender.accept_response(receiver.response_header,
                                content=content,
                                content_type=content_type)
+
+class TestParsingAuthHeader(TestCase):
+
+    def test_parse_authorization_header(self):
+        """
+        Verify parsing authorization headers works as expected for values containing
+        '=' characters.
+
+        Example request header:
+
+        Hawk mac="dpU9zv+FtvcAATKs3uQPv1bZUWUHv2Gk1AFgmqUQibD+HET62FGTLBEZUWRW2pCLnIw58xe5VnXm3R9Tn6GB1w==", hash="IAAMSxZyCP0PeUOGzBmQyHuYIPuyCLESdQcfWpqlR1GXtHW+uaAzhCQ70SUthXHEiTEtVLVE0G3x0+GODCR1Sg==", id="equality", ts="1414522950", nonce="19LHUq"
+        """
+        # Hash value here gets generated with terminating '==' which broke
+        # existing parsing mechanism.
+        creds = {
+            'id': 'equality',
+            'algorithm': 'sha512',
+            'key': 'super secret shared key',
+        }
+        content = json.dumps(dict(foo='bar'))
+        content_type = 'application/json'
+        sender = Sender(
+            creds,
+            'http://site.com/foo?bar=1',
+            'POST',
+            content=content,
+            content_type=content_type
+        )
+        expected_hash_value = calculate_payload_hash(
+            content,
+            creds['algorithm'],
+            content_type
+        )
+        result = parse_authorization_header(sender.request_header)
+        assert expected_hash_value == result['hash']
