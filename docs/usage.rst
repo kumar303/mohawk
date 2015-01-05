@@ -261,11 +261,13 @@ will be raised.
 
 When a *sender* calls :meth:`mohawk.Sender.accept_response`, it will receive
 a Hawk message but the nonce will be that of the original request.
+In other words, the nonce received is the same nonce that the sender
+generated and signed when initiating the request.
 This generally means you don't have to worry about *response* replay attacks.
 However, if you
 expose your :meth:`mohawk.Sender.accept_response` call
 somewhere publicly over HTTP then you
-may wish to protect against response replay attacks.
+may need to protect against response replay attacks.
 You can do so by constructing a :class:`mohawk.Sender` with
 the same ``seen_nonce`` keyword:
 
