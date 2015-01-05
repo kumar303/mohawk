@@ -162,6 +162,5 @@ class Receiver(HawkAuthority):
 
         mac = calculate_mac('response', resource, resource.gen_content_hash())
 
-        self.response_header = self._make_header(resource, mac,
-                                                 additional_keys=['ext'])
+        self.response_header = self._make_header(resource, mac)
         return self.response_header
