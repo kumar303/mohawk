@@ -2,6 +2,7 @@ import logging
 import math
 import pprint
 
+import six
 from six.moves.urllib.parse import urlparse
 
 from .exc import (AlreadyProcessed,
@@ -83,9 +84,11 @@ class HawkAuthority:
 
         if math.fabs(their_ts - now) > timestamp_skew_in_seconds:
             message = ('token with UTC timestamp {ts} has expired; '
-                       'compared to {now}'
+                       'it was compared to {now}'
                        .format(ts=their_ts, now=now))
             tsm = calculate_ts_mac(now, resource.credentials)
+            if isinstance(tsm, six.binary_type):
+                tsm = tsm.decode('ascii')
             www_authenticate = ('Hawk ts="{ts}", tsm="{tsm}", error="{error}"'
                                 .format(ts=now, tsm=tsm, error=message))
             raise TokenExpired(message,

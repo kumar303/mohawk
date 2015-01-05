@@ -17,6 +17,9 @@ from .exc import BadHeaderValue, HawkFail, InvalidCredentials
 
 HAWK_VER = 1
 log = logging.getLogger(__name__)
+allowable_header_keys = set(['id', 'ts', 'tsm', 'nonce', 'hash',
+                             'error', 'ext', 'mac', 'app', 'dlg'])
+
 
 
 def validate_credentials(creds):
@@ -144,9 +147,6 @@ def parse_authorization_header(auth_header):
         'Hawk id="dh37fgj492je", ts="1367076201", nonce="NPHgnG", ext="and
         welcome!", mac="CeWHy4d9kbLGhDlkyw2Nh3PJ7SDOdZDa267KH4ZaNMY="'
     """
-    allowable_keys = ['id', 'ts', 'nonce', 'hash',
-                      'ext', 'mac', 'app', 'dlg']
-
     attributes = {}
 
     # Make sure we have a unicode object for consistency.
@@ -155,8 +155,9 @@ def parse_authorization_header(auth_header):
 
     parts = auth_header.split(',')
     auth_scheme_parts = parts[0].split(' ')
-    if not 'hawk' == auth_scheme_parts[0].lower():
-        raise HawkFail("Unknown scheme: " + auth_scheme_parts[0].lower())
+    if 'hawk' != auth_scheme_parts[0].lower():
+        raise HawkFail("Unknown scheme '{scheme}' when parsing header"
+                       .format(scheme=auth_scheme_parts[0].lower()))
 
     # Replace 'Hawk key: value' with 'key: value'
     # which matches the rest of parts
@@ -165,8 +166,9 @@ def parse_authorization_header(auth_header):
     for part in parts:
         attr_parts = part.split('=')
         key = attr_parts[0].strip()
-        if key not in allowable_keys:
-            raise HawkFail("Unknown Hawk key_" + attr_parts[0] + "_")
+        if key not in allowable_header_keys:
+            raise HawkFail("Unknown Hawk key '{key}' when parsing header"
+                           .format(key=key))
 
         # TODO we don't do a good job of parsing, '=' should work for more =.
         # hash or mac value includes '=' character... fixup

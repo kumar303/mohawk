@@ -196,6 +196,58 @@ make sure nothing has been tampered with:
 If this method does not raise any :ref:`exceptions` then the signature of
 the response is correct and you can proceed.
 
+Allowing senders to adjust their clocks
+=======================================
+
+If a sender's clock is out of sync with the receiver, its message might
+expire prematurely. In this case the receiver should respond with a header that
+the sender can use to adjust its time.
+
+When receiving a request you might get a :class:`mohawk.exc.TokenExpired`
+exception. You can access the ``www_authenticate`` property on the
+exception object to respond correctly like this:
+
+.. doctest:: usage
+    :hide:
+
+    >>> exp_sender = Sender({'id': 'some-sender',
+    ...                      'key': 'some complicated SEKRET',
+    ...                      'algorithm': 'sha256'},
+    ...                     url,
+    ...                     method,
+    ...                     content=content,
+    ...                     content_type=content_type,
+    ...                     _timestamp=1)
+    >>> request['headers']['Authorization'] = exp_sender.request_header
+
+.. doctest:: usage
+
+    >>> from mohawk.exc import TokenExpired
+    >>> try:
+    ...     receiver = Receiver(lookup_credentials,
+    ...                         request['headers']['Authorization'],
+    ...                         request['url'],
+    ...                         request['method'],
+    ...                         content=request['content'],
+    ...                         content_type=request['headers']['Content-Type'])
+    ... except TokenExpired, expiry:
+    ...     pass
+    >>> expiry.www_authenticate
+    'Hawk ts="...", tsm="...", error="token with UTC timestamp...has expired..."'
+    >>> response['headers']['WWW-Authenticate'] = expiry.www_authenticate
+
+.. doctest:: usage
+    :hide:
+
+    >>> request['headers']['Authorization'] = sender.request_header
+
+A compliant client can look for this response header and parse the
+``ts`` property (the server's "now" timestamp) and
+the ``tsm`` property (a MAC calculation of ``ts``). It can then recalculate the
+MAC using its own credentials and if the MACs both match it can trust that this
+is the real server's timestamp. This allows the sender to retry the request
+with an adjusted timestamp.
+
 .. _nonce:
 
 Using a nonce to prevent replay attacks

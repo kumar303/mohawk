@@ -91,6 +91,11 @@ TODO
 Changelog
 ---------
 
+- **0.2.2** (2015-01-05)
+
+  - Receiver can now respond with a ``WWW-Authenticate`` header so that
+    senders can adjust their clocks. Thanks to jcwilson for the patch.
+
 - **0.2.1** (2014-03-03)
 
   - Fixed Python 2 bug in how unicode was converted to bytes

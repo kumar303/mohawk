@@ -3,6 +3,7 @@ from unittest import TestCase
 
 import mock
 from nose.tools import eq_, raises
+import six
 
 from . import Receiver, Sender
 from .exc import (AlreadyProcessed,
@@ -14,6 +15,7 @@ from .exc import (AlreadyProcessed,
                   TokenExpired)
 from .util import (parse_authorization_header,
                    utc_now,
+                   calculate_ts_mac,
                    validate_credentials)
 
 
@@ -467,7 +469,16 @@ class TestReceiver(Base):
 
         with mock.patch('mohawk.base.utc_now') as fn:
             fn.return_value = 0  # force an expiry
-            self.sender.accept_response(hdr, content='', content_type='')
+            try:
+                self.sender.accept_response(hdr, content='', content_type='')
+            except TokenExpired:
+                etype, exc, tb = sys.exc_info()
+                hdr = parse_authorization_header(exc.www_authenticate)
+                calculated = calculate_ts_mac(fn(), self.credentials)
+                if isinstance(calculated, six.binary_type):
+                    calculated = calculated.decode('ascii')
+                eq_(hdr['tsm'], calculated)
+                raise
 
     def test_respond_with_bad_ts_skew_ok(self):
         now = utc_now() - 120
