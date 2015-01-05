@@ -52,9 +52,11 @@ class TokenExpired(HawkFail):
 
         The `Hawk`_ spec mentions how you can synchronize
         your sender's time with the receiver in the case
-        of unexpected expiration. However, do not expose a local
-        timestamp in the raw to a sender over HTTP since
-        it can potentially be used for an attack.
+        of unexpected expiration. It is okay to expose the
+        server timestamp in the clear (in the absence of TLS)
+        so long as it is accompanied by a ts mac calculated
+        using the client's credentials and the client verifies
+        the mac prior to applying the offset.
         See the Hawk Node lib for an example of HMAC'ing the
         timestamp to send to clients.
 
@@ -62,9 +64,11 @@ class TokenExpired(HawkFail):
     """
     #: Current local time in seconds that was used to compare timestamps.
     localtime_in_seconds = None
+    www_authenticate = None
 
     def __init__(self, *args, **kw):
         self.localtime_in_seconds = kw.pop('localtime_in_seconds')
+        self.www_authenticate = kw.pop('www_authenticate')
         super(HawkFail, self).__init__(*args, **kw)
 
 
