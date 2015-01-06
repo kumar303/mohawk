@@ -13,3 +13,9 @@ install:
     - pip install tox
 script:
     - tox -e $TOX_ENV
+notifications:
+  irc:
+    channels:
+      - "irc.mozilla.org#payments"
+    on_success: change
+    on_failure: always
