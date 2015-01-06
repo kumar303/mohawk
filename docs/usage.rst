@@ -230,7 +230,7 @@ exception object to respond correctly like this:
     ...                         request['method'],
     ...                         content=request['content'],
     ...                         content_type=request['headers']['Content-Type'])
-    ... except TokenExpired, expiry:
+    ... except TokenExpired as expiry:
     ...     pass
     >>> expiry.www_authenticate
     'Hawk ts="...", tsm="...", error="token with UTC timestamp...has expired..."'
