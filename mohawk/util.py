@@ -268,3 +268,19 @@ def normalize_header_attr(val):
     # Normalize like the hawk reference code.
     val = escape_header_attr(val)
     return val
+
+
+def get_bewit(resource):
+    """Returns a bewit identifier for the resource"""
+    assert resource.method == 'GET'
+    mac = calculate_mac(
+        'bewit',
+        resource,
+        None,
+    )
+
+    if resource.ext is None:
+        ext = ''
+    else:
+        ext = resource.ext
+    return urlsafe_b64encode(r"{id}\{exp}\{mac}\{ext}".format(id=resource.credentials['id'], exp=resource.timestamp, ext=ext, mac=mac))
