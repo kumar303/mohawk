@@ -6,6 +6,7 @@ from nose.tools import eq_, raises
 import six
 
 from . import Receiver, Sender
+from .base import Resource
 from .exc import (AlreadyProcessed,
                   BadHeaderValue,
                   CredentialsLookupError,
@@ -16,7 +17,8 @@ from .exc import (AlreadyProcessed,
 from .util import (parse_authorization_header,
                    utc_now,
                    calculate_ts_mac,
-                   validate_credentials)
+                   validate_credentials,
+                   get_bewit)
 
 
 class Base(TestCase):
@@ -609,3 +611,45 @@ class TestSendAndReceive(Base):
         sender.accept_response(receiver.response_header,
                                content=content,
                                content_type=content_type)
+
+
+class TestBewit(Base):
+
+    # Test cases copied from
+    # https://github.com/hueniverse/hawk/blob/492632da51ecedd5f59ce96f081860ad24ce6532/test/uri.js
+
+    def setUp(self):
+        self.credentials = {
+            'id': '123456',
+            'key': '2983d45yun89q',
+            'algorithm': 'sha256',
+        }
+
+    def test_bewit(self):
+        res = Resource(url='https://example.com/somewhere/over/the/rainbow',
+                       method='GET', credentials=self.credentials,
+                       timestamp=1356420407 + 300,
+                       nonce='',
+                       )
+        bewit = get_bewit(res)
+
+        eq_(bewit, "MTIzNDU2XDEzNTY0MjA3MDdcSUdZbUxnSXFMckNlOEN4dktQczRKbFdJQStValdKSm91d2dBUmlWaENBZz1c")
+
+    def test_bewit_ext(self):
+        res = Resource(url='https://example.com/somewhere/over/the/rainbow',
+                       method='GET', credentials=self.credentials,
+                       timestamp=1356420407 + 300,
+                       nonce='',
+                       ext='xandyandz'
+                       )
+        bewit = get_bewit(res)
+
+        eq_(bewit, "MTIzNDU2XDEzNTY0MjA3MDdca3NjeHdOUjJ0SnBQMVQxekRMTlBiQjVVaUtJVTl0T1NKWFRVZEc3WDloOD1ceGFuZHlhbmR6")
+
+    def test_bewit_port(self):
+        res = Resource(url='https://example.com:8080/somewhere/over/the/rainbow',
+                       method='GET', credentials=self.credentials,
+                       timestamp=1356420407 + 300, nonce='', ext='xandyandz')
+        bewit = get_bewit(res)
+
+        eq_(bewit, "MTIzNDU2XDEzNTY0MjA3MDdcaFpiSjNQMmNLRW80a3kwQzhqa1pBa1J5Q1p1ZWc0V1NOYnhWN3ZxM3hIVT1ceGFuZHlhbmR6")

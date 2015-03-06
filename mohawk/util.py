@@ -21,7 +21,6 @@ allowable_header_keys = set(['id', 'ts', 'tsm', 'nonce', 'hash',
                              'error', 'ext', 'mac', 'app', 'dlg'])
 
 
-
 def validate_credentials(creds):
     if not isinstance(creds, dict):
         raise InvalidCredentials('credentials must be a dict')
@@ -271,7 +270,7 @@ def normalize_header_attr(val):
 
 
 def get_bewit(resource):
-    """Returns a bewit identifier for the resource"""
+    """Returns a bewit identifier for the resource as a string"""
     assert resource.method == 'GET'
     mac = calculate_mac(
         'bewit',
@@ -279,8 +278,17 @@ def get_bewit(resource):
         None,
     )
 
+    if isinstance(mac, six.binary_type):
+        mac = mac.decode('ascii')
+
     if resource.ext is None:
         ext = ''
     else:
         ext = resource.ext
-    return urlsafe_b64encode(r"{id}\{exp}\{mac}\{ext}".format(id=resource.credentials['id'], exp=resource.timestamp, ext=ext, mac=mac))
+
+    inner_bewit = u"{id}\\{exp}\\{mac}\\{ext}".format(
+        id=resource.credentials['id'],
+        exp=resource.timestamp,
+        ext=ext,
+        mac=mac).encode('ascii')
+    return urlsafe_b64encode(inner_bewit).decode("ascii")
