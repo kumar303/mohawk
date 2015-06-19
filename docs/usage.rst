@@ -265,9 +265,9 @@ the timestamp of the message which may result in a
 :class:`mohawk.exc.TokenExpired` exception.
 Second, every message includes a `cryptographic nonce`_
 which is a unique
-identifier. In combination with the timestamp, a receiver can use the nonce to
-know if it has *already* received the request. If so,
-the :class:`mohawk.exc.AlreadyProcessed` exception is raised.
+identifier. In combination with the sender's id and the request's timestamp, a
+receiver can use the nonce to know if it has *already* received the request. If
+so, the :class:`mohawk.exc.AlreadyProcessed` exception is raised.
 
 By default, Mohawk doesn't know how to check nonce values; this is something
 your application needs to do.
@@ -277,13 +277,13 @@ your application needs to do.
     If you don't configure nonce checking, your application could be
     susceptible to replay attacks.
 
-Make a callable that returns True if a nonce plus its timestamp has been
+Make a callable that returns True if a sender's nonce plus its timestamp has been
 seen already. Here is an example using something like memcache:
 
 .. doctest:: usage
 
-    >>> def seen_nonce(nonce, timestamp):
-    ...     key = '{nonce}:{ts}'.format(nonce=nonce, ts=timestamp)
+    >>> def seen_nonce(id, nonce, timestamp):
+    ...     key = '{id}:{nonce}:{ts}'.format(id=id, nonce=nonce, ts=timestamp)
     ...     if memcache.get(key):
     ...         # We have already processed this nonce + timestamp.
     ...         return True

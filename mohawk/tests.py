@@ -29,7 +29,7 @@ class Base(TestCase):
         }
 
         # This callable might be replaced by tests.
-        def seen_nonce(nonce, ts):
+        def seen_nonce(id, nonce, ts):
             return False
         self.seen_nonce = seen_nonce
 
@@ -197,7 +197,7 @@ class TestSender(Base):
     @raises(AlreadyProcessed)
     def test_nonce_fail(self):
 
-        def seen_nonce(nonce, ts):
+        def seen_nonce(id, nonce, ts):
             return True
 
         sn = self.Sender()
@@ -206,7 +206,7 @@ class TestSender(Base):
 
     def test_nonce_ok(self):
 
-        def seen_nonce(nonce, ts):
+        def seen_nonce(id, nonce, ts):
             return False
 
         sn = self.Sender(seen_nonce=seen_nonce)
