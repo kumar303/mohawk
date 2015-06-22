@@ -282,8 +282,9 @@ seen already. Here is an example using something like memcache:
 
 .. doctest:: usage
 
-    >>> def seen_nonce(id, nonce, timestamp):
-    ...     key = '{id}:{nonce}:{ts}'.format(id=id, nonce=nonce, ts=timestamp)
+    >>> def seen_nonce(sender_id, nonce, timestamp):
+    ...     key = '{id}:{nonce}:{ts}'.format(id=sender_id, nonce=nonce,
+    ...                                      ts=timestamp)
     ...     if memcache.get(key):
     ...         # We have already processed this nonce + timestamp.
     ...         return True

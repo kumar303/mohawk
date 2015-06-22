@@ -91,6 +91,13 @@ TODO
 Changelog
 ---------
 
+- **0.3.0** (2015-06-22)
+
+  - **Breaking change:** The ``seen_nonce()`` callback signature has changed.
+    You must update your callback from ``seen_nonce(nonce, timestamp)``
+    to ``seen_nonce(sender_id, nonce, timestamp)`` to avoid unnecessary
+    collisions. See :ref:`nonce` for details.
+
 - **0.2.2** (2015-01-05)
 
   - Receiver can now respond with a ``WWW-Authenticate`` header so that
