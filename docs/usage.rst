@@ -196,12 +196,12 @@ make sure nothing has been tampered with:
 If this method does not raise any :ref:`exceptions` then the signature of
 the response is correct and you can proceed.
 
-Allowing senders to adjust their clocks
-=======================================
+Allowing senders to adjust their timestamps
+===========================================
 
 If a sender's clock is out of sync with the receiver, its message might
-expire prematurely. In this case the receiver should respond with a header that
-the sender can use to adjust its time.
+expire prematurely. In this case the receiver should respond with a header
+the sender can use to adjust its timestamp.
 
 When receiving a request you might get a :class:`mohawk.exc.TokenExpired`
 exception. You can access the ``www_authenticate`` property on the
