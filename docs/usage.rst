@@ -196,12 +196,12 @@ make sure nothing has been tampered with:
 If this method does not raise any :ref:`exceptions` then the signature of
 the response is correct and you can proceed.
 
-Allowing senders to adjust their clocks
-=======================================
+Allowing senders to adjust their timestamps
+===========================================
 
 If a sender's clock is out of sync with the receiver, its message might
-expire prematurely. In this case the receiver should respond with a header that
-the sender can use to adjust its time.
+expire prematurely. In this case the receiver should respond with a header
+the sender can use to adjust its timestamp.
 
 When receiving a request you might get a :class:`mohawk.exc.TokenExpired`
 exception. You can access the ``www_authenticate`` property on the
@@ -265,9 +265,9 @@ the timestamp of the message which may result in a
 :class:`mohawk.exc.TokenExpired` exception.
 Second, every message includes a `cryptographic nonce`_
 which is a unique
-identifier. In combination with the timestamp, a receiver can use the nonce to
-know if it has *already* received the request. If so,
-the :class:`mohawk.exc.AlreadyProcessed` exception is raised.
+identifier. In combination with the sender's id and the request's timestamp, a
+receiver can use the nonce to know if it has *already* received the request. If
+so, the :class:`mohawk.exc.AlreadyProcessed` exception is raised.
 
 By default, Mohawk doesn't know how to check nonce values; this is something
 your application needs to do.
@@ -277,13 +277,14 @@ your application needs to do.
     If you don't configure nonce checking, your application could be
     susceptible to replay attacks.
 
-Make a callable that returns True if a nonce plus its timestamp has been
+Make a callable that returns True if a sender's nonce plus its timestamp has been
 seen already. Here is an example using something like memcache:
 
 .. doctest:: usage
 
-    >>> def seen_nonce(nonce, timestamp):
-    ...     key = '{nonce}:{ts}'.format(nonce=nonce, ts=timestamp)
+    >>> def seen_nonce(sender_id, nonce, timestamp):
+    ...     key = '{id}:{nonce}:{ts}'.format(id=sender_id, nonce=nonce,
+    ...                                      ts=timestamp)
     ...     if memcache.get(key):
     ...         # We have already processed this nonce + timestamp.
     ...         return True

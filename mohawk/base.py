@@ -70,12 +70,14 @@ class HawkAuthority:
                             algo=resource.credentials['algorithm']))
 
         if resource.seen_nonce:
-            if resource.seen_nonce(parsed_header['nonce'],
+            if resource.seen_nonce(resource.credentials['id'],
+                                   parsed_header['nonce'],
                                    parsed_header['ts']):
                 raise AlreadyProcessed('Nonce {nonce} with timestamp {ts} '
-                                       'has already been processed'
+                                       'has already been processed for {id}'
                                        .format(nonce=parsed_header['nonce'],
-                                               ts=parsed_header['ts']))
+                                               ts=parsed_header['ts'],
+                                               id=resource.credentials['id']))
         else:
             log.warn('seen_nonce was None; not checking nonce. '
                      'You may be vulnerable to replay attacks')

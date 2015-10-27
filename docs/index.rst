@@ -19,7 +19,8 @@ messages signed by a shared key.
 It is based on `HTTP MAC access authentication`_ (which
 was based on parts of `OAuth 1.0`_).
 
-The Mohawk API is a little different from that of the Node library.
+The Mohawk API is a little different from that of the Node library
+(i.e. `the living Hawk spec <https://github.com/hueniverse/hawk>`_).
 It was redesigned to be more intuitive to developers, less prone to security
 problems, and more Pythonic.
 
@@ -91,10 +92,17 @@ TODO
 Changelog
 ---------
 
+- **0.3.0** (2015-06-22)
+
+  - **Breaking change:** The ``seen_nonce()`` callback signature has changed.
+    You must update your callback from ``seen_nonce(nonce, timestamp)``
+    to ``seen_nonce(sender_id, nonce, timestamp)`` to avoid unnecessary
+    collisions. See :ref:`nonce` for details.
+
 - **0.2.2** (2015-01-05)
 
   - Receiver can now respond with a ``WWW-Authenticate`` header so that
-    senders can adjust their clocks. Thanks to jcwilson for the patch.
+    senders can adjust their timestamps. Thanks to jcwilson for the patch.
 
 - **0.2.1** (2014-03-03)
 
