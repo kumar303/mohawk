@@ -1,5 +1,6 @@
 import sys
 from unittest import TestCase
+from base64 import b64decode
 
 import mock
 from nose.tools import eq_, raises
@@ -17,6 +18,7 @@ from .exc import (AlreadyProcessed,
 from .util import (parse_authorization_header,
                    utc_now,
                    calculate_ts_mac,
+                   calculate_mac,
                    validate_credentials,
                    get_bewit)
 
@@ -633,6 +635,8 @@ class TestBewit(Base):
                        )
         bewit = get_bewit(res)
 
+        mac = calculate_mac('bewit', res, None).decode('ascii')
+        eq_(b64decode(bewit).decode('ascii'), '123456\\1356420707\\{mac}\\'.format(mac=mac))
         eq_(bewit, "MTIzNDU2XDEzNTY0MjA3MDdcSUdZbUxnSXFMckNlOEN4dktQczRKbFdJQStValdKSm91d2dBUmlWaENBZz1c")
 
     def test_bewit_ext(self):
@@ -644,6 +648,8 @@ class TestBewit(Base):
                        )
         bewit = get_bewit(res)
 
+        mac = calculate_mac('bewit', res, None).decode('ascii')
+        eq_(b64decode(bewit).decode('ascii'), '123456\\1356420707\\{mac}\\xandyandz'.format(mac=mac))
         eq_(bewit, "MTIzNDU2XDEzNTY0MjA3MDdca3NjeHdOUjJ0SnBQMVQxekRMTlBiQjVVaUtJVTl0T1NKWFRVZEc3WDloOD1ceGFuZHlhbmR6")
 
     def test_bewit_port(self):
@@ -652,4 +658,12 @@ class TestBewit(Base):
                        timestamp=1356420407 + 300, nonce='', ext='xandyandz')
         bewit = get_bewit(res)
 
+        mac = calculate_mac('bewit', res, None).decode('ascii')
+        eq_(b64decode(bewit).decode('ascii'), '123456\\1356420707\\{mac}\\xandyandz'.format(mac=mac))
         eq_(bewit, "MTIzNDU2XDEzNTY0MjA3MDdcaFpiSjNQMmNLRW80a3kwQzhqa1pBa1J5Q1p1ZWc0V1NOYnhWN3ZxM3hIVT1ceGFuZHlhbmR6")
+
+    def test_bewit_invalid_method(self):
+        res = Resource(url='https://example.com:8080/somewhere/over/the/rainbow',
+                       method='POST', credentials=self.credentials,
+                       timestamp=1356420407 + 300, nonce='')
+        self.assertRaises(ValueError, get_bewit, res)

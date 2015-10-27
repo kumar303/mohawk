@@ -271,7 +271,8 @@ def normalize_header_attr(val):
 
 def get_bewit(resource):
     """Returns a bewit identifier for the resource as a string"""
-    assert resource.method == 'GET'
+    if resource.method != 'GET':
+        raise ValueError('bewits can only be generated for GET requests')
     mac = calculate_mac(
         'bewit',
         resource,
@@ -286,9 +287,17 @@ def get_bewit(resource):
     else:
         ext = resource.ext
 
+    # b64encode works only with bytes in python3, but all of our parameters are
+    # in unicode, so we need to encode them. The cleanest way to do this that
+    # works in both python 2 and 3 is to use string formatting to get a
+    # unicode string, and then explicitly encode it to bytes.
     inner_bewit = u"{id}\\{exp}\\{mac}\\{ext}".format(
         id=resource.credentials['id'],
         exp=resource.timestamp,
+        mac=mac,
         ext=ext,
-        mac=mac).encode('ascii')
-    return urlsafe_b64encode(inner_bewit).decode("ascii")
+    )
+    inner_bewit_bytes = inner_bewit.encode('ascii')
+    bewit_bytes = urlsafe_b64encode(inner_bewit_bytes)
+    # Now decode the resulting bytes back to a unicode string
+    return bewit_bytes.decode('ascii')
