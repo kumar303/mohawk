@@ -635,9 +635,8 @@ class TestBewit(Base):
                        )
         bewit = get_bewit(res)
 
-        mac = calculate_mac('bewit', res, None).decode('ascii')
-        eq_(b64decode(bewit).decode('ascii'), '123456\\1356420707\\{mac}\\'.format(mac=mac))
-        eq_(bewit, "MTIzNDU2XDEzNTY0MjA3MDdcSUdZbUxnSXFMckNlOEN4dktQczRKbFdJQStValdKSm91d2dBUmlWaENBZz1c")
+        expected = '123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
+        eq_(b64decode(bewit).decode('ascii'), expected)
 
     def test_bewit_ext(self):
         res = Resource(url='https://example.com/somewhere/over/the/rainbow',
@@ -648,9 +647,8 @@ class TestBewit(Base):
                        )
         bewit = get_bewit(res)
 
-        mac = calculate_mac('bewit', res, None).decode('ascii')
-        eq_(b64decode(bewit).decode('ascii'), '123456\\1356420707\\{mac}\\xandyandz'.format(mac=mac))
-        eq_(bewit, "MTIzNDU2XDEzNTY0MjA3MDdca3NjeHdOUjJ0SnBQMVQxekRMTlBiQjVVaUtJVTl0T1NKWFRVZEc3WDloOD1ceGFuZHlhbmR6")
+        expected = '123456\\1356420707\\kscxwNR2tJpP1T1zDLNPbB5UiKIU9tOSJXTUdG7X9h8=\\xandyandz'
+        eq_(b64decode(bewit).decode('ascii'), expected)
 
     def test_bewit_port(self):
         res = Resource(url='https://example.com:8080/somewhere/over/the/rainbow',
@@ -658,9 +656,8 @@ class TestBewit(Base):
                        timestamp=1356420407 + 300, nonce='', ext='xandyandz')
         bewit = get_bewit(res)
 
-        mac = calculate_mac('bewit', res, None).decode('ascii')
-        eq_(b64decode(bewit).decode('ascii'), '123456\\1356420707\\{mac}\\xandyandz'.format(mac=mac))
-        eq_(bewit, "MTIzNDU2XDEzNTY0MjA3MDdcaFpiSjNQMmNLRW80a3kwQzhqa1pBa1J5Q1p1ZWc0V1NOYnhWN3ZxM3hIVT1ceGFuZHlhbmR6")
+        expected = '123456\\1356420707\\hZbJ3P2cKEo4ky0C8jkZAkRyCZueg4WSNbxV7vq3xHU=\\xandyandz'
+        eq_(b64decode(bewit).decode('ascii'), expected)
 
     def test_bewit_invalid_method(self):
         res = Resource(url='https://example.com:8080/somewhere/over/the/rainbow',
