@@ -18,7 +18,6 @@ from .exc import (AlreadyProcessed,
 from .util import (parse_authorization_header,
                    utc_now,
                    calculate_ts_mac,
-                   calculate_mac,
                    validate_credentials,
                    get_bewit)
 
@@ -648,6 +647,20 @@ class TestBewit(Base):
         bewit = get_bewit(res)
 
         expected = '123456\\1356420707\\kscxwNR2tJpP1T1zDLNPbB5UiKIU9tOSJXTUdG7X9h8=\\xandyandz'
+        eq_(b64decode(bewit).decode('ascii'), expected)
+
+    def test_bewit_ext_backslash(self):
+        credentials = self.credentials
+        credentials['id'] = '123\\456'
+        res = Resource(url='https://example.com/somewhere/over/the/rainbow',
+                       method='GET', credentials=self.credentials,
+                       timestamp=1356420407 + 300,
+                       nonce='',
+                       ext='xand\\yandz'
+                       )
+        bewit = get_bewit(res)
+
+        expected = '123456\\1356420707\\b82LLIxG5UDkaChLU953mC+SMrbniV1sb8KiZi9cSsc=\\xand\\yandz'
         eq_(b64decode(bewit).decode('ascii'), expected)
 
     def test_bewit_port(self):

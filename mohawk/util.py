@@ -287,12 +287,20 @@ def get_bewit(resource):
     else:
         ext = resource.ext
 
+    # Strip out \ from the clientId
+    # since that can break parsing the response
+    # NB that the canonical implementation does not do this as of
+    # Oct 28, 2015, so this could break compat.
+    # We can leave \ in ext since validators can limit how many \ they split
+    # on (although again, the canonical implementation does not do this)
+    clientId = resource.credentials['id'].replace("\\", "")
+
     # b64encode works only with bytes in python3, but all of our parameters are
     # in unicode, so we need to encode them. The cleanest way to do this that
     # works in both python 2 and 3 is to use string formatting to get a
     # unicode string, and then explicitly encode it to bytes.
     inner_bewit = u"{id}\\{exp}\\{mac}\\{ext}".format(
-        id=resource.credentials['id'],
+        id=clientId,
         exp=resource.timestamp,
         mac=mac,
         ext=ext,
