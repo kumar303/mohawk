@@ -1,4 +1,4 @@
-from base64 import b64encode, urlsafe_b64encode
+from base64 import b64encode, urlsafe_b64encode, b64decode
 import calendar
 import hashlib
 import hmac
@@ -9,10 +9,18 @@ import pprint
 import re
 import sys
 import time
+import re
+from collections import namedtuple
 
 import six
 
-from .exc import BadHeaderValue, HawkFail, InvalidCredentials
+from .exc import (
+    BadHeaderValue,
+    HawkFail,
+    InvalidCredentials,
+    CredentialsLookupError,
+    TokenExpired,
+    MacMismatch)
 
 
 HAWK_VER = 1
@@ -309,3 +317,68 @@ def get_bewit(resource):
     bewit_bytes = urlsafe_b64encode(inner_bewit_bytes)
     # Now decode the resulting bytes back to a unicode string
     return bewit_bytes.decode('ascii')
+
+
+bewittuple = namedtuple('bewittuple', 'id exp mac ext')
+
+def parse_bewit(bewit):
+    """Returns the parts of the bewit as a namedtuple:
+        (id, exp, mac, ext)
+    Input it base64-encoded bewit string
+    """
+    decoded_bewit = b64decode(bewit).decode('ascii')
+    return bewittuple(*decoded_bewit.split("\\", 3))
+
+def strip_bewit(url):
+    """Strips the bewit parameter out of the url.
+    Returns (encoded_bewit, stripped_url)
+    Raises ValueError if no bewit found."""
+    m = re.search('[?&]bewit=([^&]+)', url)
+    if not m:
+        raise ValueError('no bewit found')
+    bewit = m.group(1)
+    stripped_url = url[:m.start()] + url[m.end():]
+    return bewit, stripped_url
+
+
+def check_bewit(url, credentials_map, timestamp=None, nonce=''):
+    """Returns True if the resource has a valid bewit parameter attached; False otherwise.
+    If timestamp is None, then the current time is used."""
+
+    # This import is here to avoid circular imports
+    # base -> util -> base
+    # ugh
+    from .base import Resource
+    raw_bewit, stripped_url = strip_bewit(url)
+    bewit = parse_bewit(raw_bewit)
+    if bewit.id not in credentials_map:
+        raise CredentialsLookupError('Could not find credentials for ID {0}'
+                                     .format(bewit.id))
+
+    # Check that the timestamp isn't expired
+    if timestamp is None:
+        timestamp = time.time()
+    if int(bewit.exp) < timestamp:
+        raise TokenExpired('bewit with UTC timestamp {ts} has expired; '
+                           'it was compared to {now}'
+                           .format(ts=bewit.exp, now=timestamp),
+                           localtime_in_seconds=timestamp,
+                           www_authenticate=''
+                           )
+
+
+    res = Resource(url=stripped_url,
+                   method='GET',
+                   credentials=credentials_map[bewit.id],
+                   timestamp=bewit.exp,
+                   nonce='',
+                   ext=bewit.ext,
+                   )
+    mac = calculate_mac('bewit', res, None)
+    mac = mac.decode('ascii')
+
+    if mac != bewit.mac:
+        raise MacMismatch('bewit with mac {bewit_mac} did not match expected mac {expected_mac}'
+                          .format(bewit_mac=bewit.mac,
+                                  expected_mac=mac))
+    return True
