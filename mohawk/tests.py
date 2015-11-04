@@ -696,7 +696,7 @@ class TestBewit(Base):
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
         self.assertEquals(bewit.id, '123456')
-        self.assertEquals(bewit.exp, '1356420707')
+        self.assertEquals(bewit.expiration, '1356420707')
         self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
         self.assertEquals(bewit.ext, '')
 
@@ -705,7 +705,7 @@ class TestBewit(Base):
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
         self.assertEquals(bewit.id, '123456')
-        self.assertEquals(bewit.exp, '1356420707')
+        self.assertEquals(bewit.expiration, '1356420707')
         self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
         self.assertEquals(bewit.ext, 'xandyandz')
 
@@ -714,7 +714,7 @@ class TestBewit(Base):
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
         self.assertEquals(bewit.id, '123456')
-        self.assertEquals(bewit.exp, '1356420707')
+        self.assertEquals(bewit.expiration, '1356420707')
         self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
         self.assertEquals(bewit.ext, 'xand\\yandz')
 

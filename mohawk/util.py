@@ -321,7 +321,7 @@ def get_bewit(resource):
     return bewit_bytes.decode('ascii')
 
 
-bewittuple = namedtuple('bewittuple', 'id exp mac ext')
+bewittuple = namedtuple('bewittuple', 'id expiration mac ext')
 
 
 def parse_bewit(bewit):
@@ -362,10 +362,10 @@ def check_bewit(url, credentials_map, timestamp=None, nonce=''):
     # Check that the timestamp isn't expired
     if timestamp is None:
         timestamp = time.time()
-    if int(bewit.exp) < timestamp:
+    if int(bewit.expiration) < timestamp:
         raise TokenExpired('bewit with UTC timestamp {ts} has expired; '
                            'it was compared to {now}'
-                           .format(ts=bewit.exp, now=timestamp),
+                           .format(ts=bewit.expiration, now=timestamp),
                            localtime_in_seconds=timestamp,
                            www_authenticate=''
                            )
@@ -373,7 +373,7 @@ def check_bewit(url, credentials_map, timestamp=None, nonce=''):
     res = Resource(url=stripped_url,
                    method='GET',
                    credentials=credentials_map[bewit.id],
-                   timestamp=bewit.exp,
+                   timestamp=bewit.expiration,
                    nonce='',
                    ext=bewit.ext,
                    )
