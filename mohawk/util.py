@@ -19,7 +19,8 @@ from .exc import (
     InvalidCredentials,
     CredentialsLookupError,
     TokenExpired,
-    MacMismatch)
+    MacMismatch,
+    InvalidBewit)
 
 
 HAWK_VER = 1
@@ -330,6 +331,9 @@ def parse_bewit(bewit):
     Input it base64-encoded bewit string
     """
     decoded_bewit = b64decode(bewit).decode('ascii')
+    bewit_parts = decoded_bewit.split("\\", 3)
+    if len(bewit_parts) != 4:
+        raise InvalidBewit('Expected 4 parts to bewit: %s' % decoded_bewit)
     return bewittuple(*decoded_bewit.split("\\", 3))
 
 

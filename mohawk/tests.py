@@ -14,7 +14,8 @@ from .exc import (AlreadyProcessed,
                   InvalidCredentials,
                   MacMismatch,
                   MisComputedContentHash,
-                  TokenExpired)
+                  TokenExpired,
+                  InvalidBewit)
 from .util import (parse_authorization_header,
                    utc_now,
                    calculate_ts_mac,
@@ -717,6 +718,19 @@ class TestBewit(Base):
         self.assertEquals(bewit.expiration, '1356420707')
         self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
         self.assertEquals(bewit.ext, 'xand\\yandz')
+
+    @raises(InvalidBewit)
+    def test_parse_invalid_bewit(self):
+        bewit = b'12345'
+        bewit = urlsafe_b64encode(bewit).decode('ascii')
+        bewit = parse_bewit(bewit)
+
+    @raises(InvalidBewit)
+    # TODO: rename this
+    def test_parse_invalid_bewit2(self):
+        bewit = b'1\\2'
+        bewit = urlsafe_b64encode(bewit).decode('ascii')
+        bewit = parse_bewit(bewit)
 
     def test_validate_bewit(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
