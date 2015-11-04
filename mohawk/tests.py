@@ -640,7 +640,7 @@ class TestBewit(Base):
         expected = '123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
         eq_(b64decode(bewit).decode('ascii'), expected)
 
-    def test_bewit_ext(self):
+    def test_bewit_with_ext(self):
         res = Resource(url='https://example.com/somewhere/over/the/rainbow',
                        method='GET', credentials=self.credentials,
                        timestamp=1356420407 + 300,
@@ -652,7 +652,7 @@ class TestBewit(Base):
         expected = '123456\\1356420707\\kscxwNR2tJpP1T1zDLNPbB5UiKIU9tOSJXTUdG7X9h8=\\xandyandz'
         eq_(b64decode(bewit).decode('ascii'), expected)
 
-    def test_bewit_ext_backslash(self):
+    def test_bewit_with_ext_and_backslashes(self):
         credentials = self.credentials
         credentials['id'] = '123\\456'
         res = Resource(url='https://example.com/somewhere/over/the/rainbow',
@@ -666,7 +666,7 @@ class TestBewit(Base):
         expected = '123456\\1356420707\\b82LLIxG5UDkaChLU953mC+SMrbniV1sb8KiZi9cSsc=\\xand\\yandz'
         eq_(b64decode(bewit).decode('ascii'), expected)
 
-    def test_bewit_port(self):
+    def test_bewit_with_port(self):
         res = Resource(url='https://example.com:8080/somewhere/over/the/rainbow',
                        method='GET', credentials=self.credentials,
                        timestamp=1356420407 + 300, nonce='', ext='xandyandz')
@@ -700,7 +700,7 @@ class TestBewit(Base):
         self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
         self.assertEquals(bewit.ext, '')
 
-    def test_parse_bewit_ext(self):
+    def test_parse_bewit_with_ext(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\xandyandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
@@ -709,7 +709,7 @@ class TestBewit(Base):
         self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
         self.assertEquals(bewit.ext, 'xandyandz')
 
-    def test_parse_bewit_ext_and_backslashes(self):
+    def test_parse_bewit_with_ext_and_backslashes(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\xand\\yandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
@@ -718,7 +718,7 @@ class TestBewit(Base):
         self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
         self.assertEquals(bewit.ext, 'xand\\yandz')
 
-    def test_bewit_validation(self):
+    def test_validate_bewit(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
@@ -727,7 +727,7 @@ class TestBewit(Base):
         }
         self.assertTrue(check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 10))
 
-    def test_bewit_validation_with_ext(self):
+    def test_validate_bewit_with_ext(self):
         bewit = b'123456\\1356420707\\kscxwNR2tJpP1T1zDLNPbB5UiKIU9tOSJXTUdG7X9h8=\\xandyandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
@@ -736,7 +736,7 @@ class TestBewit(Base):
         }
         self.assertTrue(check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 10))
 
-    def test_bewit_validation_with_ext_and_backslashes(self):
+    def test_validate_bewit_with_ext_and_backslashes(self):
         bewit = b'123456\\1356420707\\b82LLIxG5UDkaChLU953mC+SMrbniV1sb8KiZi9cSsc=\\xand\\yandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
@@ -746,7 +746,7 @@ class TestBewit(Base):
         self.assertTrue(check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 10))
 
     @raises(TokenExpired)
-    def test_bewit_validation_expired(self):
+    def test_validate_expired_bewit(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
