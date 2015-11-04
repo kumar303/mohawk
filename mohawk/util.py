@@ -367,7 +367,8 @@ def check_bewit(url, credentials_map, timestamp=None, nonce=''):
 
     # Check that the timestamp isn't expired
     if timestamp is None:
-        timestamp = time.time()
+        # TODO: Add offset/skew
+        timestamp = utc_now()
     if int(bewit.expiration) < timestamp:
         raise TokenExpired('bewit with UTC timestamp {ts} has expired; '
                            'it was compared to {now}'
