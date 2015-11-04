@@ -26,6 +26,8 @@ def get_bewit(resource):
     """
     if resource.method != 'GET':
         raise ValueError('bewits can only be generated for GET requests')
+    if resource.nonce != '':
+        raise ValueError('bewits must use an empty nonce')
     mac = calculate_mac(
         'bewit',
         resource,
@@ -107,7 +109,7 @@ def strip_bewit(url):
     return bewit, stripped_url
 
 
-def check_bewit(url, credential_lookup, now=None, nonce=''):
+def check_bewit(url, credential_lookup, now=None):
     """
     Validates the given bewit.
 
@@ -125,11 +127,6 @@ def check_bewit(url, credential_lookup, now=None, nonce=''):
         Unix epoch time for the current time to determine if bewit has expired.
         If None, then the current time as given by utc_now() is used.
     :type now=None: integer
-
-    :param nonce='':
-        A string that when coupled with the timestamp will
-        uniquely identify this request to prevent replays.
-    :type nonce='': str
     """
     raw_bewit, stripped_url = strip_bewit(url)
     bewit = parse_bewit(raw_bewit)

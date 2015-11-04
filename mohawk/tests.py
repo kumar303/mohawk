@@ -686,6 +686,14 @@ class TestBewit(Base):
         eq_(b64decode(bewit).decode('ascii'), expected)
 
     @raises(ValueError)
+    def test_bewit_with_nonce(self):
+        res = Resource(url='https://example.com/somewhere/over/the/rainbow',
+                       method='GET', credentials=self.credentials,
+                       timestamp=1356420407 + 300,
+                       nonce='n1')
+        get_bewit(res)
+
+    @raises(ValueError)
     def test_bewit_invalid_method(self):
         res = Resource(url='https://example.com:8080/somewhere/over/the/rainbow',
                        method='POST', credentials=self.credentials,
@@ -734,14 +742,13 @@ class TestBewit(Base):
         self.assertEquals(bewit.ext, 'xand\\yandz')
 
     @raises(InvalidBewit)
-    def test_parse_invalid_bewit(self):
+    def test_parse_invalid_bewit_with_only_one_part(self):
         bewit = b'12345'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
 
     @raises(InvalidBewit)
-    # TODO: rename this
-    def test_parse_invalid_bewit2(self):
+    def test_parse_invalid_bewit_with_only_two_parts(self):
         bewit = b'1\\2'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
