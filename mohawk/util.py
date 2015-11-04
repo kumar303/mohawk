@@ -350,7 +350,9 @@ def strip_bewit(url):
 
 
 def check_bewit(url, credentials_map, timestamp=None, nonce=''):
-    """Returns True if the resource has a valid bewit parameter attached; False otherwise.
+    """Returns True if the resource has a valid bewit parameter attached
+    Raises a subclass of HawkFail otherwise.
+
     If timestamp is None, then the current time is used."""
 
     # This import is here to avoid circular imports
