@@ -139,18 +139,6 @@ def check_bewit(url, credential_lookup, now=None, nonce=''):
         raise CredentialsLookupError('Could not find credentials for ID {0}'
                                      .format(bewit.id))
 
-    # Check that the timestamp isn't expired
-    if now is None:
-        # TODO: Add offset/skew
-        now = utc_now()
-    if int(bewit.expiration) < now:
-        raise TokenExpired('bewit with UTC timestamp {ts} has expired; '
-                           'it was compared to {now}'
-                           .format(ts=bewit.expiration, now=now),
-                           localtime_in_seconds=now,
-                           www_authenticate=''
-                           )
-
     res = Resource(url=stripped_url,
                    method='GET',
                    credentials=credentials,
@@ -165,4 +153,17 @@ def check_bewit(url, credential_lookup, now=None, nonce=''):
         raise MacMismatch('bewit with mac {bewit_mac} did not match expected mac {expected_mac}'
                           .format(bewit_mac=bewit.mac,
                                   expected_mac=mac))
+
+    # Check that the timestamp isn't expired
+    if now is None:
+        # TODO: Add offset/skew
+        now = utc_now()
+    if int(bewit.expiration) < now:
+        raise TokenExpired('bewit with UTC timestamp {ts} has expired; '
+                           'it was compared to {now}'
+                           .format(ts=bewit.expiration, now=now),
+                           localtime_in_seconds=now,
+                           www_authenticate=''
+                           )
+
     return True
