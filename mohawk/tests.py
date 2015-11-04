@@ -19,11 +19,11 @@ from .exc import (AlreadyProcessed,
 from .util import (parse_authorization_header,
                    utc_now,
                    calculate_ts_mac,
-                   validate_credentials,
-                   get_bewit,
-                   check_bewit,
-                   strip_bewit,
-                   parse_bewit)
+                   validate_credentials)
+from .bewit import (get_bewit,
+                    check_bewit,
+                    strip_bewit,
+                    parse_bewit)
 
 
 class Base(TestCase):
