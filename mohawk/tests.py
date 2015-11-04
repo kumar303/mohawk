@@ -692,6 +692,11 @@ class TestBewit(Base):
         self.assertEquals(raw_bewit, bewit)
         self.assertEquals(stripped_url, "https://example.com/somewhere/over/the/rainbow")
 
+    @raises(InvalidBewit)
+    def test_strip_url_without_bewit(self):
+        url = "https://example.com/somewhere/over/the/rainbow"
+        strip_bewit(url)
+
     def test_parse_bewit(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
         bewit = urlsafe_b64encode(bewit).decode('ascii')

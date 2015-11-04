@@ -343,7 +343,7 @@ def strip_bewit(url):
     Raises ValueError if no bewit found."""
     m = re.search('[?&]bewit=([^&]+)', url)
     if not m:
-        raise ValueError('no bewit found')
+        raise InvalidBewit('no bewit data found')
     bewit = m.group(1)
     stripped_url = url[:m.start()] + url[m.end():]
     return bewit, stripped_url
