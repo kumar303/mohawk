@@ -300,7 +300,10 @@ def get_bewit(resource):
     # Oct 28, 2015, so this could break compat.
     # We can leave \ in ext since validators can limit how many \ they split
     # on (although again, the canonical implementation does not do this)
-    client_id = resource.credentials['id'].replace("\\", "")
+    client_id = resource.credentials['id']
+    if "\\" in client_id:
+        log.warn("Stripping backslash character(s) '\\' from client_id")
+        client_id = client_id.replace("\\", "")
 
     # b64encode works only with bytes in python3, but all of our parameters are
     # in unicode, so we need to encode them. The cleanest way to do this that
