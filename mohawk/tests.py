@@ -773,3 +773,13 @@ class TestBewit(Base):
             self.credentials['id']: self.credentials,
         }
         check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 1000)
+
+    @raises(CredentialsLookupError)
+    def test_validate_bewit_with_unknown_credentials(self):
+        bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
+        bewit = urlsafe_b64encode(bewit).decode('ascii')
+        url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
+        credentials_map = {
+            'other_id': self.credentials,
+        }
+        check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 10)
