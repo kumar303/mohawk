@@ -630,6 +630,15 @@ class TestBewit(Base):
             'algorithm': 'sha256',
         }
 
+    def make_credential_lookup(self, credentials_map):
+        # Helper function to make a lookup function given a dictionary of
+        # credentials
+        def lookup(client_id):
+            # Will raise a KeyError if missing; which is a subclass of
+            # LookupError
+            return credentials_map[client_id]
+        return lookup
+
     def test_bewit(self):
         res = Resource(url='https://example.com/somewhere/over/the/rainbow',
                        method='GET', credentials=self.credentials,
@@ -741,45 +750,45 @@ class TestBewit(Base):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
-        credentials_map = {
+        credential_lookup = self.make_credential_lookup({
             self.credentials['id']: self.credentials,
-        }
-        self.assertTrue(check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 10))
+        })
+        self.assertTrue(check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10))
 
     def test_validate_bewit_with_ext(self):
         bewit = b'123456\\1356420707\\kscxwNR2tJpP1T1zDLNPbB5UiKIU9tOSJXTUdG7X9h8=\\xandyandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
-        credentials_map = {
+        credential_lookup = self.make_credential_lookup({
             self.credentials['id']: self.credentials,
-        }
-        self.assertTrue(check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 10))
+        })
+        self.assertTrue(check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10))
 
     def test_validate_bewit_with_ext_and_backslashes(self):
         bewit = b'123456\\1356420707\\b82LLIxG5UDkaChLU953mC+SMrbniV1sb8KiZi9cSsc=\\xand\\yandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
-        credentials_map = {
+        credential_lookup = self.make_credential_lookup({
             self.credentials['id']: self.credentials,
-        }
-        self.assertTrue(check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 10))
+        })
+        self.assertTrue(check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10))
 
     @raises(TokenExpired)
     def test_validate_expired_bewit(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
-        credentials_map = {
+        credential_lookup = self.make_credential_lookup({
             self.credentials['id']: self.credentials,
-        }
-        check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 1000)
+        })
+        check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 1000)
 
     @raises(CredentialsLookupError)
     def test_validate_bewit_with_unknown_credentials(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
-        credentials_map = {
+        credential_lookup = self.make_credential_lookup({
             'other_id': self.credentials,
-        }
-        check_bewit(url, credentials_map=credentials_map, timestamp=1356420407 + 10)
+        })
+        check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10)

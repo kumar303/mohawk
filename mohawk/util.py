@@ -278,7 +278,13 @@ def normalize_header_attr(val):
 
 
 def get_bewit(resource):
-    """Returns a bewit identifier for the resource as a string"""
+    """
+    Returns a bewit identifier for the resource as a string.
+
+    :param resource:
+        Resource to generate a bewit for
+    :type resource: `mohawk.base.Resource`
+    """
     if resource.method != 'GET':
         raise ValueError('bewits can only be generated for GET requests')
     mac = calculate_mac(
@@ -326,9 +332,14 @@ bewittuple = namedtuple('bewittuple', 'id expiration mac ext')
 
 
 def parse_bewit(bewit):
-    """Returns the parts of the bewit as a namedtuple:
-        (id, exp, mac, ext)
-    Input it base64-encoded bewit string
+    """
+    Returns a `bewittuple` representing the parts of an encoded bewit string.
+    This has the following named attributes:
+        (id, expiration, mac, ext)
+
+    :param bewit:
+        A base64 encoded bewit string
+    :type bewit: str
     """
     decoded_bewit = b64decode(bewit).decode('ascii')
     bewit_parts = decoded_bewit.split("\\", 3)
@@ -338,9 +349,17 @@ def parse_bewit(bewit):
 
 
 def strip_bewit(url):
-    """Strips the bewit parameter out of the url.
+    """
+    Strips the bewit parameter out of a url.
+
     Returns (encoded_bewit, stripped_url)
-    Raises ValueError if no bewit found."""
+
+    Raises InvalidBewit if no bewit found.
+
+    :param url:
+        The url containing a bewit parameter
+    :type url: str
+    """
     m = re.search('[?&]bewit=([^&]+)', url)
     if not m:
         raise InvalidBewit('no bewit data found')
@@ -349,37 +368,57 @@ def strip_bewit(url):
     return bewit, stripped_url
 
 
-def check_bewit(url, credentials_map, timestamp=None, nonce=''):
-    """Returns True if the resource has a valid bewit parameter attached
-    Raises a subclass of HawkFail otherwise.
+def check_bewit(url, credential_lookup, now=None, nonce=''):
+    """
+    Validates the given bewit.
 
-    If timestamp is None, then the current time is used."""
+    Returns True if the resource has a valid bewit parameter attached,
+    or raises a subclass of HawkFail otherwise.
 
+    :param credential_lookup:
+        Callable to look up the credentials dict by sender ID.
+        The credentials dict must have the keys:
+        ``id``, ``key``, and ``algorithm``.
+        See :ref:`receiving-request` for an example.
+    :type credential_lookup: callable
+
+    :param now=None:
+        Unix epoch time for the current time to determine if bewit has expired.
+        If None, then the current time as given by utc_now() is used.
+    :type now=None: integer
+
+    :param nonce='':
+        A string that when coupled with the timestamp will
+        uniquely identify this request to prevent replays.
+    :type nonce='': str
+    """
     # This import is here to avoid circular imports
     # base -> util -> base
     # ugh
     from .base import Resource
     raw_bewit, stripped_url = strip_bewit(url)
     bewit = parse_bewit(raw_bewit)
-    if bewit.id not in credentials_map:
+    try:
+        credentials = credential_lookup(bewit.id)
+    except LookupError:
         raise CredentialsLookupError('Could not find credentials for ID {0}'
                                      .format(bewit.id))
 
     # Check that the timestamp isn't expired
-    if timestamp is None:
+    if now is None:
         # TODO: Add offset/skew
-        timestamp = utc_now()
-    if int(bewit.expiration) < timestamp:
+        now = utc_now()
+    if int(bewit.expiration) < now:
         raise TokenExpired('bewit with UTC timestamp {ts} has expired; '
                            'it was compared to {now}'
-                           .format(ts=bewit.expiration, now=timestamp),
-                           localtime_in_seconds=timestamp,
+                           .format(ts=bewit.expiration, now=now),
+                           localtime_in_seconds=now,
                            www_authenticate=''
                            )
 
     res = Resource(url=stripped_url,
                    method='GET',
-                   credentials=credentials_map[bewit.id],
+                   credentials=credentials,
                    timestamp=bewit.expiration,
                    nonce='',
                    ext=bewit.ext,
