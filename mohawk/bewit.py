@@ -156,6 +156,7 @@ def check_bewit(url, credential_lookup, now=None):
         # TODO: Add offset/skew
         now = utc_now()
     if int(bewit.expiration) < now:
+        # TODO: Refactor TokenExpired to handle this better
         raise TokenExpired('bewit with UTC timestamp {ts} has expired; '
                            'it was compared to {now}'
                            .format(ts=bewit.expiration, now=now),
