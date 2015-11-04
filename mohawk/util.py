@@ -9,7 +9,6 @@ import pprint
 import re
 import sys
 import time
-import re
 from collections import namedtuple
 
 import six
@@ -295,20 +294,20 @@ def get_bewit(resource):
     else:
         ext = resource.ext
 
-    # Strip out \ from the clientId
+    # Strip out \ from the client id
     # since that can break parsing the response
     # NB that the canonical implementation does not do this as of
     # Oct 28, 2015, so this could break compat.
     # We can leave \ in ext since validators can limit how many \ they split
     # on (although again, the canonical implementation does not do this)
-    clientId = resource.credentials['id'].replace("\\", "")
+    client_id = resource.credentials['id'].replace("\\", "")
 
     # b64encode works only with bytes in python3, but all of our parameters are
     # in unicode, so we need to encode them. The cleanest way to do this that
     # works in both python 2 and 3 is to use string formatting to get a
     # unicode string, and then explicitly encode it to bytes.
     inner_bewit = u"{id}\\{exp}\\{mac}\\{ext}".format(
-        id=clientId,
+        id=client_id,
         exp=resource.timestamp,
         mac=mac,
         ext=ext,
@@ -321,6 +320,7 @@ def get_bewit(resource):
 
 bewittuple = namedtuple('bewittuple', 'id exp mac ext')
 
+
 def parse_bewit(bewit):
     """Returns the parts of the bewit as a namedtuple:
         (id, exp, mac, ext)
@@ -328,6 +328,7 @@ def parse_bewit(bewit):
     """
     decoded_bewit = b64decode(bewit).decode('ascii')
     return bewittuple(*decoded_bewit.split("\\", 3))
+
 
 def strip_bewit(url):
     """Strips the bewit parameter out of the url.
@@ -365,7 +366,6 @@ def check_bewit(url, credentials_map, timestamp=None, nonce=''):
                            localtime_in_seconds=timestamp,
                            www_authenticate=''
                            )
-
 
     res = Resource(url=stripped_url,
                    method='GET',
