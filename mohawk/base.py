@@ -165,7 +165,7 @@ class Resource:
         self.timestamp = str(kw.pop('timestamp', None) or utc_now())
 
         self.nonce = kw.pop('nonce', None)
-        if not self.nonce:
+        if self.nonce is None:
             self.nonce = random_string(6)
 
         # This is a lookup function for checking nonces.

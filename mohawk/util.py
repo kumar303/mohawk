@@ -12,14 +12,16 @@ import time
 
 import six
 
-from .exc import BadHeaderValue, HawkFail, InvalidCredentials
+from .exc import (
+    BadHeaderValue,
+    HawkFail,
+    InvalidCredentials)
 
 
 HAWK_VER = 1
 log = logging.getLogger(__name__)
 allowable_header_keys = set(['id', 'ts', 'tsm', 'nonce', 'hash',
                              'error', 'ext', 'mac', 'app', 'dlg'])
-
 
 
 def validate_credentials(creds):

@@ -78,3 +78,10 @@ class AlreadyProcessed(HawkFail):
 
     See :ref:`nonce` for details.
     """
+
+
+class InvalidBewit(HawkFail):
+    """
+    The bewit is invalid; e.g. it doesn't contain the right number of
+    parameters.
+    """
