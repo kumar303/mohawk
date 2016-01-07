@@ -39,9 +39,13 @@ but you can also build them manually like this::
 Publish a release
 =================
 
-To publish a new release on `PyPI`_, make sure the changelog is up to date,
-make sure you bumped the module version in ``setup.py``, and run this
-from the repository root::
+Do this first to prepare for a release:
+
+- make sure the changelog is up to date
+- make sure you bumped the module version in ``setup.py``
+- commit, tag (like ``git tag 0.3.1``), and push upstream
+
+To publish the new release on `PyPI`_, run this from the repository root::
 
     python setup.py sdist register upload
 

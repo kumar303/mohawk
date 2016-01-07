@@ -97,13 +97,18 @@ into specific web frameworks:
 TODO
 ====
 
-* Implement bewit. **The bewit URI scheme is not implemented at this time.**
+* Implement bewit. **The bewit URI scheme is not fully implemented at this time.**
 * Support SNTP synchronization for local server time.
 * Support auto-retrying a :class:`mohawk.Sender` request with an offset if
   there is timestamp skew.
 
 Changelog
 ---------
+
+- **0.3.1** (2016-01-07)
+
+  - Initial bewit support (undocumented).
+    Complete support with documentation is still forthcoming.
 
 - **0.3.0** (2015-06-22)
 
