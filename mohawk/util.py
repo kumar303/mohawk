@@ -25,8 +25,8 @@ allowable_header_keys = set(['id', 'ts', 'tsm', 'nonce', 'hash',
 
 
 def validate_credentials(creds):
-    if not isinstance(creds, dict):
-        raise InvalidCredentials('credentials must be a dict')
+    if not hasattr(creds, '__getitem__'):
+        raise InvalidCredentials('credentials must be a dict-like object')
     try:
         creds['id']
         creds['key']

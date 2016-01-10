@@ -73,6 +73,12 @@ class TestConfig(Base):
     def test_no_credentials(self):
         validate_credentials(None)
 
+    def test_non_dict_credentials(self):
+        class WeirdThing(object):
+            def __getitem__(self, key):
+                return 'whatever'
+        validate_credentials(WeirdThing())
+
 
 class TestSender(Base):
 
