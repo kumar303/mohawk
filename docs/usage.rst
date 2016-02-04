@@ -144,6 +144,12 @@ Create a :class:`mohawk.Receiver` using values from the incoming request:
 If this constructor does not raise any :ref:`exceptions` then the signature of
 the request is correct and you can proceed.
 
+.. important::
+
+    The server running :class:`mohawk.Receiver` code should synchronize its
+    clock with something like `TLSdate`_ to make sure it compares timestamps
+    correctly.
+
 Responding to a request
 =======================
 
@@ -198,6 +204,9 @@ the response is correct and you can proceed.
 
 Allowing senders to adjust their timestamps
 ===========================================
+
+The easiest way to avoid timestamp problems is to synchronize your
+server clock using something like `TLSdate`_.
 
 If a sender's clock is out of sync with the receiver, its message might
 expire prematurely. In this case the receiver should respond with a header
@@ -398,5 +407,6 @@ Well, hey, that about summarizes the concepts and basic usage of Mohawk.
 Check out the :ref:`API` for details.
 Also make sure you are familiar with :ref:`security`.
 
+.. _`TLSdate`: http://linux-audit.com/tlsdate-the-secure-alternative-for-ntpd-ntpdate-and-rdate/
 .. _`Hawk`: https://github.com/hueniverse/hawk
 .. _`requests`: http://docs.python-requests.org/
