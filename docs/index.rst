@@ -98,7 +98,8 @@ TODO
 ====
 
 * Implement bewit. **The bewit URI scheme is not fully implemented at this time.**
-* Support SNTP synchronization for local server time.
+* Support NTP-like (but secure) synchronization for local server time.
+  See `TLSdate <http://linux-audit.com/tlsdate-the-secure-alternative-for-ntpd-ntpdate-and-rdate/>`_.
 * Support auto-retrying a :class:`mohawk.Sender` request with an offset if
   there is timestamp skew.
 
