@@ -48,7 +48,7 @@ def get_bewit(resource):
     # Oct 28, 2015, so this could break compat.
     # We can leave \ in ext since validators can limit how many \ they split
     # on (although again, the canonical implementation does not do this)
-    client_id = resource.credentials['id']
+    client_id = six.text_type(resource.credentials['id'])
     if "\\" in client_id:
         log.warn("Stripping backslash character(s) '\\' from client_id")
         client_id = client_id.replace("\\", "")
