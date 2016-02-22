@@ -656,6 +656,17 @@ class TestBewit(Base):
         expected = '123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
         eq_(b64decode(bewit).decode('ascii'), expected)
 
+    def test_bewit_with_binary_id(self):
+        # Check for exceptions in get_bewit call with binary id
+        binary_credentials = self.credentials.copy()
+        binary_credentials['id'] = binary_credentials['id'].encode('ascii')
+        res = Resource(url='https://example.com/somewhere/over/the/rainbow',
+                       method='GET', credentials=binary_credentials,
+                       timestamp=1356420407 + 300,
+                       nonce='',
+                       )
+        get_bewit(res)
+
     def test_bewit_with_ext(self):
         res = Resource(url='https://example.com/somewhere/over/the/rainbow',
                        method='GET', credentials=self.credentials,
