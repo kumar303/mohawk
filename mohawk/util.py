@@ -172,10 +172,8 @@ def parse_authorization_header(auth_header):
             raise HawkFail("Unknown Hawk key '{key}' when parsing header"
                            .format(key=key))
 
-        # TODO we don't do a good job of parsing, '=' should work for more =.
-        # hash or mac value includes '=' character... fixup
-        if len(attr_parts) == 3:
-            attr_parts[1] += '=' + attr_parts[2]
+        if len(attr_parts) > 2:
+            attr_parts[1] = '='.join(attr_parts[1:])
 
         # Chop of quotation marks
         value = attr_parts[1]
