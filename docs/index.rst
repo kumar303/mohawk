@@ -106,6 +106,12 @@ TODO
 Changelog
 ---------
 
+- **0.3.2** (2016-02-24)
+
+  - Improved Python 3 support.
+  - Fixed bug in handling ``ext`` values that have more than one equal sign.
+  - Configuration objects no longer need to be strictly dicts.
+
 - **0.3.1** (2016-01-07)
 
   - Initial bewit support (undocumented).
