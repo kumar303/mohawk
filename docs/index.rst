@@ -106,6 +106,10 @@ TODO
 Changelog
 ---------
 
+- **0.3.2.1** (2016-02-25)
+
+  - Re-did the ``0.3.2`` release; the tag was missing some commits. D'oh.
+
 - **0.3.2** (2016-02-24)
 
   - Improved Python 3 support.
