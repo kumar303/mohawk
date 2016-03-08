@@ -31,6 +31,13 @@ class HawkAuthority:
 
         now = utc_now(offset_in_seconds=localtime_offset_in_seconds)
 
+        their_hash = parsed_header.get('hash', '')
+        mac = calculate_mac(mac_type, resource, their_hash)
+        if not strings_match(mac, parsed_header['mac']):
+            raise MacMismatch('MACs do not match; ours: {ours}; '
+                              'theirs: {theirs}'
+                              .format(ours=mac, theirs=parsed_header['mac']))
+
         if 'hash' not in parsed_header and accept_untrusted_content:
             # The request did not hash its content.
             log.debug('NOT calculating/verifiying payload hash '
@@ -41,15 +48,8 @@ class HawkAuthority:
             check_hash = True
             content_hash = resource.gen_content_hash()
 
-        their_hash = parsed_header.get('hash', '')
         if check_hash and not their_hash:
             log.info('request unexpectedly did not hash its content')
-
-        mac = calculate_mac(mac_type, resource, content_hash)
-        if not strings_match(mac, parsed_header['mac']):
-            raise MacMismatch('MACs do not match; ours: {ours}; '
-                              'theirs: {theirs}'
-                              .format(ours=mac, theirs=parsed_header['mac']))
 
         if check_hash:
             p_hash = calculate_payload_hash(resource.content,
