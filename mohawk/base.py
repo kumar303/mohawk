@@ -52,10 +52,7 @@ class HawkAuthority:
             log.info('request unexpectedly did not hash its content')
 
         if check_hash:
-            p_hash = calculate_payload_hash(resource.content,
-                                            resource.credentials['algorithm'],
-                                            resource.content_type)
-            if not strings_match(p_hash, their_hash):
+            if not strings_match(content_hash, their_hash):
                 # The hash declared in the header is incorrect.
                 # Content could have been tampered with.
                 log.debug('mismatched content: {content}'
@@ -65,7 +62,7 @@ class HawkAuthority:
                 raise MisComputedContentHash(
                     'Our hash {ours} ({algo}) did not '
                     'match theirs {theirs}'
-                    .format(ours=p_hash,
+                    .format(ours=content_hash,
                             theirs=their_hash,
                             algo=resource.credentials['algorithm']))
 
