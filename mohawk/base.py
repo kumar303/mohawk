@@ -32,11 +32,12 @@ class HawkAuthority:
         now = utc_now(offset_in_seconds=localtime_offset_in_seconds)
 
         their_hash = parsed_header.get('hash', '')
+        their_mac = parsed_header.get('mac', '')
         mac = calculate_mac(mac_type, resource, their_hash)
-        if not strings_match(mac, parsed_header['mac']):
+        if not strings_match(mac, their_mac):
             raise MacMismatch('MACs do not match; ours: {ours}; '
                               'theirs: {theirs}'
-                              .format(ours=mac, theirs=parsed_header['mac']))
+                              .format(ours=mac, theirs=their_mac))
 
         if 'hash' not in parsed_header and accept_untrusted_content:
             # The request did not hash its content.
