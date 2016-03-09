@@ -106,6 +106,14 @@ TODO
 Changelog
 ---------
 
+- **0.3.3** (unreleased)
+
+  - Fixed some cases where :class:`mohawk.exc.MacMismatch` was raised
+    instead of :class:`mohawk.exc.MisComputedContentHash`.
+    This follows the `Hawk HTTP authorization scheme`_ implementation
+    more closely.
+    See `issue 15 <https://github.com/kumar303/mohawk/issues/15>`_.
+
 - **0.3.2.1** (2016-02-25)
 
   - Re-did the ``0.3.2`` release; the tag was missing some commits. D'oh.
