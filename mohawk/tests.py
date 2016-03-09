@@ -192,7 +192,7 @@ class TestSender(Base):
         self.receive(sn.request_header,
                      url='http://site.com:8000/foo?bar=1')
 
-    @raises(MacMismatch)
+    @raises(MisComputedContentHash)
     def test_tamper_with_content(self):
         sn = self.Sender()
         self.receive(sn.request_header, content='stuff=nope')
@@ -259,7 +259,7 @@ class TestSender(Base):
         # Without an offset this will raise an expired exception.
         self.receive(sn.request_header, timestamp_skew_in_seconds=120)
 
-    @raises(MisComputedContentHash)
+    @raises(MacMismatch)
     def test_hash_tampering(self):
         sn = self.Sender()
         header = sn.request_header.replace('hash="', 'hash="nope')
@@ -428,13 +428,13 @@ class TestReceiver(Base):
         self.receive(method=method)
         self.respond()
 
-    @raises(MacMismatch)
+    @raises(MisComputedContentHash)
     def test_respond_with_wrong_content(self):
         self.receive()
         self.respond(content='real content',
                      accept_kw=dict(content='TAMPERED WITH'))
 
-    @raises(MacMismatch)
+    @raises(MisComputedContentHash)
     def test_respond_with_wrong_content_type(self):
         self.receive()
         self.respond(content_type='text/html',
@@ -548,14 +548,14 @@ class TestReceiver(Base):
         wrong_sender = self.sender
         self.receive(url='http://realsite.com/', sender=wrong_sender)
 
-    @raises(MacMismatch)
+    @raises(MisComputedContentHash)
     def test_receive_wrong_content(self):
         self.receive(sender_kw=dict(content='real request'),
                      content='real request')
         wrong_sender = self.sender
         self.receive(content='TAMPERED WITH', sender=wrong_sender)
 
-    @raises(MacMismatch)
+    @raises(MisComputedContentHash)
     def test_unexpected_unhashed_content(self):
         self.receive(sender_kw=dict(content=None, content_type=None,
                                     always_hash_content=False))
@@ -574,7 +574,7 @@ class TestReceiver(Base):
                                     content_type='text/plain'),
                      content=content, content_type=None)
 
-    @raises(MacMismatch)
+    @raises(MisComputedContentHash)
     def test_receive_wrong_content_type(self):
         self.receive(sender_kw=dict(content_type='text/html'),
                      content_type='text/html')
