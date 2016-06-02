@@ -23,7 +23,7 @@ Mohawk is an alternate Python implementation of the
     :alt: Travis master branch status
 
 .. image:: https://readthedocs.org/projects/mohawk/badge/?version=latest
-    :target: https://mohawk.readthedocs.org/en/latest/?badge=latest
+    :target: https://mohawk.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation status
 
 
@@ -56,7 +56,7 @@ Using `pip`_::
 
 If you want to install from source, visit https://github.com/kumar303/mohawk
 
-.. _pip: http://pip.readthedocs.org/
+.. _pip: https://pip.readthedocs.io/
 
 Bugs
 ====
@@ -90,7 +90,7 @@ into specific web frameworks:
 * `Hawkrest`_: adds Hawk to `Django Rest Framework`_
 * Did we miss one? Send a `pull request`_ so we can link to it.
 
-.. _`Hawkrest`: http://hawkrest.readthedocs.org/
+.. _`Hawkrest`: https://hawkrest.readthedocs.io/
 .. _`Django Rest Framework`: http://django-rest-framework.org/
 .. _`pull request`: https://github.com/kumar303/mohawk
 
