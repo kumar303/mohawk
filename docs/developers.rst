@@ -51,5 +51,5 @@ To publish the new release on `PyPI`_, run this from the repository root::
 
 
 .. _virtualenv: https://pypi.python.org/pypi/virtualenv
-.. _tox: http://tox.readthedocs.org/
+.. _tox: https://tox.readthedocs.io/
 .. _`PyPI`: https://pypi.python.org/pypi

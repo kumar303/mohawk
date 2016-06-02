@@ -14,12 +14,12 @@ Mohawk
     :alt: Travis master branch status
 
 .. image:: https://readthedocs.org/projects/mohawk/badge/?version=latest
-    :target: https://mohawk.readthedocs.org/en/latest/?badge=latest
+    :target: https://mohawk.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation status
 
 Mohawk is an alternate Python implementation of the
 `Hawk HTTP authorization scheme`_.
 
-Full documentation: https://mohawk.readthedocs.org/
+Full documentation: https://mohawk.readthedocs.io/
 
 .. _`Hawk HTTP authorization scheme`: https://github.com/hueniverse/hawk
