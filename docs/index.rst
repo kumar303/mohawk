@@ -106,7 +106,7 @@ TODO
 Changelog
 ---------
 
-- **0.3.3** (unreleased)
+- **0.3.3** (2016-07-12)
 
   - Fixed some cases where :class:`mohawk.exc.MacMismatch` was raised
     instead of :class:`mohawk.exc.MisComputedContentHash`.
