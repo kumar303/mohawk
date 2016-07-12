@@ -113,6 +113,7 @@ Changelog
     This follows the `Hawk HTTP authorization scheme`_ implementation
     more closely.
     See `issue 15 <https://github.com/kumar303/mohawk/issues/15>`_.
+  - Published as a Python wheel
 
 - **0.3.2.1** (2016-02-25)
 

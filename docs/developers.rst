@@ -44,10 +44,14 @@ Do this first to prepare for a release:
 - make sure the changelog is up to date
 - make sure you bumped the module version in ``setup.py``
 - commit, tag (like ``git tag 0.3.1``), and push upstream
+  (like ``git push --tags upstream``).
 
-To publish the new release on `PyPI`_, run this from the repository root::
+Run this from the repository root to publish a new release to `PyPI`_
+as both a source distribution and wheel::
 
-    python setup.py sdist register upload
+    rm -rf dist/*
+    python setup.py sdist bdist_wheel
+    twine upload dist/*
 
 
 .. _virtualenv: https://pypi.python.org/pypi/virtualenv
