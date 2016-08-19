@@ -222,10 +222,7 @@ def utc_now(offset_in_seconds=0.0):
 # Allowed value characters:
 # !#$%&'()*+,-./:;<=>?@[]^_`{|}~ and space, a-z, A-Z, 0-9, \, "
 _header_attribute_chars = re.compile(
-    r"^[ \w\!#\$%&'\(\)\*\+,\-\./\:;<\=>\?@\[\]\^`\{\|\}~\"\\]*$",
-    # Here we want to make sure non-ascii chars are excluded from headers per
-    # the Node lib.
-    re.LOCALE)
+    r"^[ a-zA-Z0-9_\!#\$%&'\(\)\*\+,\-\./\:;<\=>\?@\[\]\^`\{\|\}~\"\\]*$")
 
 
 def validate_header_attr(val, name=None):
