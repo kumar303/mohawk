@@ -10,6 +10,12 @@ class HawkFail(Exception):
     """
 
 
+class MissingAuthorization(HawkFail):
+    """
+    No authorization header was sent by the client.
+    """
+
+
 class InvalidCredentials(HawkFail):
     """
     The specified Hawk credentials are invalid.

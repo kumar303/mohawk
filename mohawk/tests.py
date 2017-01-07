@@ -14,6 +14,7 @@ from .exc import (AlreadyProcessed,
                   InvalidCredentials,
                   MacMismatch,
                   MisComputedContentHash,
+                  MissingAuthorization,
                   TokenExpired,
                   InvalidBewit)
 from .util import (parse_authorization_header,
@@ -439,6 +440,10 @@ class TestReceiver(Base):
         self.receive()
         self.respond(content_type='text/html',
                      accept_kw=dict(content_type='application/json'))
+
+    @raises(MissingAuthorization)
+    def test_missing_authorization(self):
+        Receiver(lambda id: self.credentials, None, '/', 'GET')
 
     @raises(MacMismatch)
     def test_respond_with_wrong_url(self):
