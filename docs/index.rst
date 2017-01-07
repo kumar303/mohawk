@@ -112,6 +112,9 @@ Changelog
     (it now raises :class:`mohawk.exc.MissingAuthorization`) for cases
     when the client sends a None type authorization header.
     See `issue 23 <https://github.com/kumar303/mohawk/issues/23>`_.
+  - Fixed Python 3.6 compatibility problem (a regex pattern was using
+    the deprecated ``LOCALE`` flag).
+    See `issue 32 <https://github.com/kumar303/mohawk/issues/32>`_.
 
 - **0.3.3** (2016-07-12)
 
