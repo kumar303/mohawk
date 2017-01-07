@@ -2,7 +2,7 @@ import logging
 import sys
 
 from .base import default_ts_skew_in_seconds, HawkAuthority, Resource
-from .exc import CredentialsLookupError
+from .exc import CredentialsLookupError, MissingAuthorization
 from .util import (calculate_mac,
                    parse_authorization_header,
                    validate_credentials)
@@ -78,6 +78,9 @@ class Receiver(HawkAuthority):
         self.seen_nonce = seen_nonce
 
         log.debug('accepting request {header}'.format(header=request_header))
+
+        if not request_header:
+            raise MissingAuthorization()
 
         parsed_header = parse_authorization_header(request_header)
 
