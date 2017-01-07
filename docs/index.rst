@@ -106,6 +106,13 @@ TODO
 Changelog
 ---------
 
+- **0.3.4** (2017-01-07)
+
+  - Fixed ``AttributeError`` exception
+    (it now raises :class:`mohawk.exc.MissingAuthorization`) for cases
+    when the client sends a None type authorization header.
+    See `issue 23 <https://github.com/kumar303/mohawk/issues/23>`_.
+
 - **0.3.3** (2016-07-12)
 
   - Fixed some cases where :class:`mohawk.exc.MacMismatch` was raised
