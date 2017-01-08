@@ -313,23 +313,28 @@ class TestSender(Base):
         header = sn.request_header.replace('my external data', 'TAMPERED')
         self.receive(header)
 
+    @raises(BadHeaderValue)
     def test_ext_with_quotes(self):
         sn = self.Sender(ext='quotes=""')
         self.receive(sn.request_header)
-        parsed = parse_authorization_header(sn.request_header)
-        eq_(parsed['ext'], 'quotes=""')
 
+    @raises(BadHeaderValue)
     def test_ext_with_new_line(self):
         sn = self.Sender(ext="new line \n in the middle")
         self.receive(sn.request_header)
-        parsed = parse_authorization_header(sn.request_header)
-        eq_(parsed['ext'], "new line \n in the middle")
 
     def test_ext_with_equality_sign(self):
         sn = self.Sender(ext="foo=bar&foo2=bar2;foo3=bar3")
         self.receive(sn.request_header)
         parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['ext'], "foo=bar&foo2=bar2;foo3=bar3")
+
+    def test_ext_with_all_valid_characters(self):
+        valid_characters = "!#$%&'()*+,-./:;<=>?@[]^_`{|}~ azAZ09_"
+        sender = self.Sender(ext=valid_characters)
+        self.receive(sender.request_header)
+        parsed = parse_authorization_header(sender.request_header)
+        eq_(parsed['ext'], valid_characters)
 
     @raises(BadHeaderValue)
     def test_ext_with_illegal_chars(self):
@@ -338,6 +343,11 @@ class TestSender(Base):
     @raises(BadHeaderValue)
     def test_ext_with_illegal_unicode(self):
         self.Sender(ext=u'Ivan Kristi\u0107')
+
+    @raises(BadHeaderValue)
+    def test_too_long_header(self):
+        sn = self.Sender(ext='a'*5000)
+        self.receive(sn.request_header)
 
     @raises(BadHeaderValue)
     def test_ext_with_illegal_utf8(self):

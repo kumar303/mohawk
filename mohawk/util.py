@@ -19,6 +19,8 @@ from .exc import (
 
 
 HAWK_VER = 1
+HAWK_HEADER_RE = re.compile(r'(?P<key>\w+)=\"(?P<value>[^\"\\]*)\"\s*(?:,\s*|$)')
+MAX_LENGTH = 4096
 log = logging.getLogger(__name__)
 allowable_header_keys = set(['id', 'ts', 'tsm', 'nonce', 'hash',
                              'error', 'ext', 'mac', 'app', 'dlg'])
@@ -149,44 +151,39 @@ def parse_authorization_header(auth_header):
         'Hawk id="dh37fgj492je", ts="1367076201", nonce="NPHgnG", ext="and
         welcome!", mac="CeWHy4d9kbLGhDlkyw2Nh3PJ7SDOdZDa267KH4ZaNMY="'
     """
-    attributes = {}
+    if len(auth_header) > MAX_LENGTH:
+        raise BadHeaderValue('Header exceeds maximum length of {max_length}'.format(
+            max_length=MAX_LENGTH))
 
     # Make sure we have a unicode object for consistency.
     if isinstance(auth_header, six.binary_type):
         auth_header = auth_header.decode('utf8')
 
-    parts = auth_header.split(',')
-    auth_scheme_parts = parts[0].split(' ')
-    if 'hawk' != auth_scheme_parts[0].lower():
+    scheme, attributes_string = auth_header.split(' ', 1)
+
+    if scheme.lower() != 'hawk':
         raise HawkFail("Unknown scheme '{scheme}' when parsing header"
                        .format(scheme=auth_scheme_parts[0].lower()))
 
-    # Replace 'Hawk key: value' with 'key: value'
-    # which matches the rest of parts
-    parts[0] = auth_scheme_parts[1]
 
-    for part in parts:
-        attr_parts = part.split('=')
-        key = attr_parts[0].strip()
+    attributes = {}
+
+    def replace_attribute(match):
+        """Extract the next key="value"-pair in the header."""
+        key = match.group('key')
+        value = match.group('value')
         if key not in allowable_header_keys:
             raise HawkFail("Unknown Hawk key '{key}' when parsing header"
                            .format(key=key))
-
-        if len(attr_parts) > 2:
-            attr_parts[1] = '='.join(attr_parts[1:])
-
-        # Chop of quotation marks
-        value = attr_parts[1]
-
-        if attr_parts[1].find('"') == 0:
-            value = attr_parts[1][1:]
-
-        if value.find('"') > -1:
-            value = value[0:-1]
-
         validate_header_attr(value, name=key)
-        value = unescape_header_attr(value)
         attributes[key] = value
+
+    # Iterate over all the key="value"-pairs in the header, replace them with
+    # an empty string, and store the extracted attribute in the attributes
+    # dict. Correctly formed headers will then leave nothing unparsed ('').
+    unparsed_header = HAWK_HEADER_RE.sub(replace_attribute, attributes_string)
+    if unparsed_header != '':
+        raise BadHeaderValue("Couldn't parse Hawk header")
 
     log.debug('parsed Hawk header: {header} into: \n{parsed}'
               .format(header=auth_header, parsed=pprint.pformat(attributes)))
@@ -242,13 +239,6 @@ def escape_header_attr(val):
     val = val.replace('\\', '\\\\')
     val = val.replace('"', '\\"')
     val = val.replace('\n', '\\n')
-    return val
-
-
-def unescape_header_attr(val):
-    # Un-do the hawk escaping.
-    val = val.replace('\\n', '\n')
-    val = val.replace('\\\\', '\\').replace('\\"', '"')
     return val
 
 
