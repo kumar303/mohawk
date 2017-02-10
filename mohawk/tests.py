@@ -314,6 +314,12 @@ class TestSender(Base):
         self.receive(header)
 
     @raises(BadHeaderValue)
+    def test_duplicate_keys(self):
+        sn = self.Sender(ext='someext')
+        header = sn.request_header + ', ext="otherext"'
+        self.receive(header)
+
+    @raises(BadHeaderValue)
     def test_ext_with_quotes(self):
         sn = self.Sender(ext='quotes=""')
         self.receive(sn.request_header)

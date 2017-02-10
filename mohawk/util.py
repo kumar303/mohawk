@@ -176,6 +176,8 @@ def parse_authorization_header(auth_header):
             raise HawkFail("Unknown Hawk key '{key}' when parsing header"
                            .format(key=key))
         validate_header_attr(value, name=key)
+        if key in attributes:
+            raise BadHeaderValue('Duplicate key in header: {key}'.format(key=key))
         attributes[key] = value
 
     # Iterate over all the key="value"-pairs in the header, replace them with
