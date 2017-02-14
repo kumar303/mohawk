@@ -1,6 +1,11 @@
 """
 If you want to catch any exception that might be raised,
 catch :class:`mohawk.exc.HawkFail`.
+
+.. important::
+
+    Never expose an exception message publicly, say, in an HTTP
+    response, as it may provide hints to an attacker.
 """
 
 

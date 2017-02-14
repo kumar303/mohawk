@@ -14,6 +14,9 @@ requests/responses.
 
 Here are some additional security considerations:
 
+* ``mohawk`` is intended to be used as a low-level library.
+  You should *never* expose its :ref:`exceptions` publicly, say,
+  in an HTTP response, as they may provide hints to an attacker.
 * Using a shared secret for signatures means that if the secret leaks out
   then messages can be signed all day long.
   Make sure secrets are stored somewhere safe and never
