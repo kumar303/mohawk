@@ -50,7 +50,7 @@ def get_bewit(resource):
     # on (although again, the canonical implementation does not do this)
     client_id = six.text_type(resource.credentials['id'])
     if "\\" in client_id:
-        log.warn("Stripping backslash character(s) '\\' from client_id")
+        log.warning("Stripping backslash character(s) '\\' from client_id")
         client_id = client_id.replace("\\", "")
 
     # b64encode works only with bytes in python3, but all of our parameters are
