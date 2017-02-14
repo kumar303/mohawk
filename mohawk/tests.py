@@ -1,4 +1,5 @@
 import sys
+import warnings
 from unittest import TestCase
 from base64 import b64decode, urlsafe_b64encode
 
@@ -25,6 +26,10 @@ from .bewit import (get_bewit,
                     check_bewit,
                     strip_bewit,
                     parse_bewit)
+
+
+# Ensure deprecation warnings are turned to exceptions
+warnings.filterwarnings('error')
 
 
 class Base(TestCase):
