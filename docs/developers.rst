@@ -30,8 +30,7 @@ Using a `virtualenv`_ you can set yourself up for development like this::
 Build the docs
 ==============
 
-Tox will leave documentation artifacts in ``.tox/docs/tmp/html/index.html``
-but you can also build them manually like this::
+In your virtualenv, you can build the docs like this::
 
     make -C docs/ html doctest
     open docs/_build/html/index.html
