@@ -733,8 +733,8 @@ class TestBewit(Base):
         url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
 
         raw_bewit, stripped_url = strip_bewit(url)
-        self.assertEquals(raw_bewit, bewit)
-        self.assertEquals(stripped_url, "https://example.com/somewhere/over/the/rainbow")
+        self.assertEqual(raw_bewit, bewit)
+        self.assertEqual(stripped_url, "https://example.com/somewhere/over/the/rainbow")
 
     @raises(InvalidBewit)
     def test_strip_url_without_bewit(self):
@@ -745,28 +745,28 @@ class TestBewit(Base):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
-        self.assertEquals(bewit.id, '123456')
-        self.assertEquals(bewit.expiration, '1356420707')
-        self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
-        self.assertEquals(bewit.ext, '')
+        self.assertEqual(bewit.id, '123456')
+        self.assertEqual(bewit.expiration, '1356420707')
+        self.assertEqual(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
+        self.assertEqual(bewit.ext, '')
 
     def test_parse_bewit_with_ext(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\xandyandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
-        self.assertEquals(bewit.id, '123456')
-        self.assertEquals(bewit.expiration, '1356420707')
-        self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
-        self.assertEquals(bewit.ext, 'xandyandz')
+        self.assertEqual(bewit.id, '123456')
+        self.assertEqual(bewit.expiration, '1356420707')
+        self.assertEqual(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
+        self.assertEqual(bewit.ext, 'xandyandz')
 
     def test_parse_bewit_with_ext_and_backslashes(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\xand\\yandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
         bewit = parse_bewit(bewit)
-        self.assertEquals(bewit.id, '123456')
-        self.assertEquals(bewit.expiration, '1356420707')
-        self.assertEquals(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
-        self.assertEquals(bewit.ext, 'xand\\yandz')
+        self.assertEqual(bewit.id, '123456')
+        self.assertEqual(bewit.expiration, '1356420707')
+        self.assertEqual(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
+        self.assertEqual(bewit.ext, 'xand\\yandz')
 
     @raises(InvalidBewit)
     def test_parse_invalid_bewit_with_only_one_part(self):
