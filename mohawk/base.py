@@ -77,8 +77,8 @@ class HawkAuthority:
                                                ts=parsed_header['ts'],
                                                id=resource.credentials['id']))
         else:
-            log.warn('seen_nonce was None; not checking nonce. '
-                     'You may be vulnerable to replay attacks')
+            log.warning('seen_nonce was None; not checking nonce. '
+                        'You may be vulnerable to replay attacks')
 
         their_ts = int(their_timestamp or parsed_header['ts'])
 
