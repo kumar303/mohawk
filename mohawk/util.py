@@ -185,7 +185,7 @@ def parse_authorization_header(auth_header):
     # dict. Correctly formed headers will then leave nothing unparsed ('').
     unparsed_header = HAWK_HEADER_RE.sub(replace_attribute, attributes_string)
     if unparsed_header != '':
-        raise BadHeaderValue("Couldn't parse Hawk header")
+        raise BadHeaderValue("Couldn't parse Hawk header", unparsed_header)
 
     log.debug('parsed Hawk header: {header} into: \n{parsed}'
               .format(header=auth_header, parsed=pprint.pformat(attributes)))
