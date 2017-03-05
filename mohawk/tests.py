@@ -355,11 +355,14 @@ class TestSender(Base):
         self.Sender(ext="something like \t is illegal")
 
     def test_unparseable_header(self):
-        with self.assertRaises(BadHeaderValue) as exc_context:
+        try:
             parse_authorization_header('Hawk mac="somemac", unparseable')
-        error_msg = str(exc_context.exception)
-        self.assertTrue("Couldn't parse Hawk header" in error_msg)
-        self.assertTrue("unparseable" in error_msg)
+        except BadHeaderValue as exc:
+            error_msg = str(exc)
+            self.assertTrue("Couldn't parse Hawk header" in error_msg)
+            self.assertTrue("unparseable" in error_msg)
+        else:
+            self.fail('should raise')
 
     @raises(BadHeaderValue)
     def test_ext_with_illegal_unicode(self):
