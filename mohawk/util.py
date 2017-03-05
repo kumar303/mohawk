@@ -163,7 +163,7 @@ def parse_authorization_header(auth_header):
 
     if scheme.lower() != 'hawk':
         raise HawkFail("Unknown scheme '{scheme}' when parsing header"
-                       .format(scheme=auth_scheme_parts[0].lower()))
+                       .format(scheme=scheme))
 
 
     attributes = {}

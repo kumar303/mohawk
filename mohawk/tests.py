@@ -12,6 +12,7 @@ from .base import Resource
 from .exc import (AlreadyProcessed,
                   BadHeaderValue,
                   CredentialsLookupError,
+                  HawkFail,
                   InvalidCredentials,
                   MacMismatch,
                   MisComputedContentHash,
@@ -334,6 +335,10 @@ class TestSender(Base):
         self.receive(sn.request_header)
         parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['ext'], "foo=bar&foo2=bar2;foo3=bar3")
+
+    @raises(HawkFail)
+    def test_non_hawk_scheme(self):
+        parse_authorization_header('Basic user:base64pw')
 
     def test_ext_with_all_valid_characters(self):
         valid_characters = "!#$%&'()*+,-./:;<=>?@[]^_`{|}~ azAZ09_"
