@@ -347,7 +347,6 @@ class TestSender(Base):
     def test_ext_with_all_valid_characters(self):
         valid_characters = "!#$%&'()*+,-./:;<=>?@[]^_`{|}~ azAZ09_"
         sender = self.Sender(ext=valid_characters)
-        self.receive(sender.request_header)
         parsed = parse_authorization_header(sender.request_header)
         eq_(parsed['ext'], valid_characters)
 
