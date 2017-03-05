@@ -7,6 +7,7 @@ import six
 
 from .base import Resource
 from .util import (calculate_mac,
+                   strings_match,
                    utc_now,
                    validate_header_attr)
 from .exc import (CredentialsLookupError,
@@ -137,7 +138,7 @@ def check_bewit(url, credential_lookup, now=None):
     mac = calculate_mac('bewit', res, None)
     mac = mac.decode('ascii')
 
-    if mac != bewit.mac:
+    if not strings_match(mac, bewit.mac):
         raise MacMismatch('bewit with mac {bewit_mac} did not match expected mac {expected_mac}'
                           .format(bewit_mac=bewit.mac,
                                   expected_mac=mac))

@@ -107,6 +107,9 @@ Changelog
 ---------
 
 - **UNRELEASED**
+
+  - **Security**: Bewit MACs were not compared in constant time and were thus
+    possibly circumventable by an attacker.
   - **Breaking**: Escape characters in header values are no longer allowed,
     potentially breaking clients that depend on this behavior.
   - Introduced max limit of 4096 characters in the Authorization header
