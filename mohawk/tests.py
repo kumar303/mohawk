@@ -340,6 +340,10 @@ class TestSender(Base):
     def test_non_hawk_scheme(self):
         parse_authorization_header('Basic user:base64pw')
 
+    @raises(HawkFail)
+    def test_invalid_key(self):
+        parse_authorization_header('Hawk mac="validmac" unknownkey="value"')
+
     def test_ext_with_all_valid_characters(self):
         valid_characters = "!#$%&'()*+,-./:;<=>?@[]^_`{|}~ azAZ09_"
         sender = self.Sender(ext=valid_characters)
