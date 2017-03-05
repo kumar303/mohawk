@@ -351,6 +351,13 @@ class TestSender(Base):
     def test_ext_with_illegal_chars(self):
         self.Sender(ext="something like \t is illegal")
 
+    def test_unparseable_header(self):
+        with self.assertRaises(BadHeaderValue) as exc_context:
+            parse_authorization_header('Hawk mac="somemac", unparseable')
+        error_msg = str(exc_context.exception)
+        self.assertTrue("Couldn't parse Hawk header" in error_msg)
+        self.assertTrue("unparseable" in error_msg)
+
     @raises(BadHeaderValue)
     def test_ext_with_illegal_unicode(self):
         self.Sender(ext=u'Ivan Kristi\u0107')
