@@ -221,7 +221,7 @@ def utc_now(offset_in_seconds=0.0):
 # Allowed value characters:
 # !#$%&'()*+,-./:;<=>?@[]^_`{|}~ and space, a-z, A-Z, 0-9, \, "
 _header_attribute_chars = re.compile(
-    r"^[ a-zA-Z0-9_\!#\$%&'\(\)\*\+,\-\./\:;<\=>\?@\[\]\^`\{\|\}~\"\\]*$")
+    r"^[ a-zA-Z0-9_\!#\$%&'\(\)\*\+,\-\./\:;<\=>\?@\[\]\^`\{\|\}~]*$")
 
 
 def validate_header_attr(val, name=None):
@@ -231,29 +231,14 @@ def validate_header_attr(val, name=None):
                              .format(name=name or '?', val=repr(val)))
 
 
-def escape_header_attr(val):
-
-    # Ensure we are working with Unicode for consistency.
-    if isinstance(val, six.binary_type):
-        val = val.decode('utf8')
-
-    # Escape quotes and slash like the hawk reference code.
-    val = val.replace('\\', '\\\\')
-    val = val.replace('"', '\\"')
-    val = val.replace('\n', '\\n')
-    return val
-
-
 def prepare_header_val(val):
-    val = escape_header_attr(val)
+    if isinstance(val, six.binary_type):
+        val = val.decode('utf-8')
     validate_header_attr(val)
     return val
 
 
 def normalize_header_attr(val):
-    if not val:
-        val = ''
-
-    # Normalize like the hawk reference code.
-    val = escape_header_attr(val)
+    if isinstance(val, six.binary_type):
+        return val.decode('utf-8')
     return val
