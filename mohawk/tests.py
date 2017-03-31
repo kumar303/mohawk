@@ -373,6 +373,12 @@ class TestSender(Base):
         sn = self.Sender(ext='a'*5000)
         self.receive(sn.request_header)
 
+    @raises(BadHeaderValue)
+    def test_ext_with_illegal_utf8(self):
+        # This isn't allowed because the escaped byte chars are out of
+        # range.
+        self.Sender(ext=u'Ivan Kristi\u0107'.encode('utf8'))
+
     def test_app_ok(self):
         app = 'custom-app'
         sn = self.Sender(app=app)
@@ -715,6 +721,25 @@ class TestBewit(Base):
 
         expected = '123456\\1356420707\\kscxwNR2tJpP1T1zDLNPbB5UiKIU9tOSJXTUdG7X9h8=\\xandyandz'
         eq_(b64decode(bewit).decode('ascii'), expected)
+
+    @raises(BadHeaderValue)
+    def test_bewit_with_invalid_ext(self):
+        res = Resource(url='https://example.com/somewhere/over/the/rainbow',
+                       method='GET', credentials=self.credentials,
+                       timestamp=1356420407 + 300,
+                       nonce='',
+                       ext='xand\\yandz')
+        get_bewit(res)
+
+    @raises(BadHeaderValue)
+    def test_bewit_with_backslashes_in_id(self):
+        credentials = self.credentials
+        credentials['id'] = '123\\456'
+        res = Resource(url='https://example.com/somewhere/over/the/rainbow',
+                       method='GET', credentials=self.credentials,
+                       timestamp=1356420407 + 300,
+                       nonce='')
+        get_bewit(res)
 
     def test_bewit_with_port(self):
         res = Resource(url='https://example.com:8080/somewhere/over/the/rainbow',

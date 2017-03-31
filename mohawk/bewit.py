@@ -7,7 +7,8 @@ import six
 
 from .base import Resource
 from .util import (calculate_mac,
-                   utc_now)
+                   utc_now,
+                   validate_header_attr)
 from .exc import (CredentialsLookupError,
                   InvalidBewit,
                   MacMismatch,
@@ -40,6 +41,7 @@ def get_bewit(resource):
     if resource.ext is None:
         ext = ''
     else:
+        validate_header_attr(resource.ext, name='ext')
         ext = resource.ext
 
     # b64encode works only with bytes in python3, but all of our parameters are
