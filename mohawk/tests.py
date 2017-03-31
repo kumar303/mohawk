@@ -797,14 +797,11 @@ class TestBewit(Base):
         self.assertEqual(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
         self.assertEqual(bewit.ext, 'xandyandz')
 
+    @raises(InvalidBewit)
     def test_parse_bewit_with_ext_and_backslashes(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\xand\\yandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
-        bewit = parse_bewit(bewit)
-        self.assertEqual(bewit.id, '123456')
-        self.assertEqual(bewit.expiration, '1356420707')
-        self.assertEqual(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
-        self.assertEqual(bewit.ext, 'xand\\yandz')
+        parse_bewit(bewit)
 
     @raises(InvalidBewit)
     def test_parse_invalid_bewit_with_only_one_part(self):
@@ -835,6 +832,16 @@ class TestBewit(Base):
             self.credentials['id']: self.credentials,
         })
         self.assertTrue(check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10))
+
+    @raises(InvalidBewit)
+    def test_validate_bewit_with_ext_and_backslashes(self):
+        bewit = b'123456\\1356420707\\b82LLIxG5UDkaChLU953mC+SMrbniV1sb8KiZi9cSsc=\\xand\\yandz'
+        bewit = urlsafe_b64encode(bewit).decode('ascii')
+        url = "https://example.com/somewhere/over/the/rainbow?bewit={bewit}".format(bewit=bewit)
+        credential_lookup = self.make_credential_lookup({
+            self.credentials['id']: self.credentials,
+        })
+        check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10)
 
     @raises(TokenExpired)
     def test_validate_expired_bewit(self):

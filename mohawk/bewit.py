@@ -74,10 +74,10 @@ def parse_bewit(bewit):
     :type bewit: str
     """
     decoded_bewit = b64decode(bewit).decode('ascii')
-    bewit_parts = decoded_bewit.split("\\", 3)
+    bewit_parts = decoded_bewit.split("\\")
     if len(bewit_parts) != 4:
         raise InvalidBewit('Expected 4 parts to bewit: %s' % decoded_bewit)
-    return bewittuple(*decoded_bewit.split("\\", 3))
+    return bewittuple(*bewit_parts)
 
 
 def strip_bewit(url):
