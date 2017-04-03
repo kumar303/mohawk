@@ -7,7 +7,8 @@ import six
 
 from .base import Resource
 from .util import (calculate_mac,
-                   utc_now)
+                   utc_now,
+                   validate_header_attr)
 from .exc import (CredentialsLookupError,
                   InvalidBewit,
                   MacMismatch,
@@ -40,25 +41,15 @@ def get_bewit(resource):
     if resource.ext is None:
         ext = ''
     else:
+        validate_header_attr(resource.ext, name='ext')
         ext = resource.ext
-
-    # Strip out \ from the client id
-    # since that can break parsing the response
-    # NB that the canonical implementation does not do this as of
-    # Oct 28, 2015, so this could break compat.
-    # We can leave \ in ext since validators can limit how many \ they split
-    # on (although again, the canonical implementation does not do this)
-    client_id = six.text_type(resource.credentials['id'])
-    if "\\" in client_id:
-        log.warning("Stripping backslash character(s) '\\' from client_id")
-        client_id = client_id.replace("\\", "")
 
     # b64encode works only with bytes in python3, but all of our parameters are
     # in unicode, so we need to encode them. The cleanest way to do this that
     # works in both python 2 and 3 is to use string formatting to get a
     # unicode string, and then explicitly encode it to bytes.
     inner_bewit = u"{id}\\{exp}\\{mac}\\{ext}".format(
-        id=client_id,
+        id=resource.credentials['id'],
         exp=resource.timestamp,
         mac=mac,
         ext=ext,
@@ -83,10 +74,10 @@ def parse_bewit(bewit):
     :type bewit: str
     """
     decoded_bewit = b64decode(bewit).decode('ascii')
-    bewit_parts = decoded_bewit.split("\\", 3)
+    bewit_parts = decoded_bewit.split("\\")
     if len(bewit_parts) != 4:
         raise InvalidBewit('Expected 4 parts to bewit: %s' % decoded_bewit)
-    return bewittuple(*decoded_bewit.split("\\", 3))
+    return bewittuple(*bewit_parts)
 
 
 def strip_bewit(url):

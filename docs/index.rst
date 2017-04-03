@@ -106,6 +106,11 @@ TODO
 Changelog
 ---------
 
+- **UNRELEASED**
+  - **Breaking**: Escape characters in header values are no longer allowed,
+    potentially breaking clients that depend on this behavior.
+  - Introduced max limit of 4096 characters in the Authorization header
+
 - **0.3.4** (2017-01-07)
 
   - Fixed ``AttributeError`` exception

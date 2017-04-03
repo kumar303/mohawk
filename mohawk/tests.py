@@ -12,6 +12,7 @@ from .base import Resource
 from .exc import (AlreadyProcessed,
                   BadHeaderValue,
                   CredentialsLookupError,
+                  HawkFail,
                   InvalidCredentials,
                   MacMismatch,
                   MisComputedContentHash,
@@ -313,17 +314,21 @@ class TestSender(Base):
         header = sn.request_header.replace('my external data', 'TAMPERED')
         self.receive(header)
 
+    @raises(BadHeaderValue)
+    def test_duplicate_keys(self):
+        sn = self.Sender(ext='someext')
+        header = sn.request_header + ', ext="otherext"'
+        self.receive(header)
+
+    @raises(BadHeaderValue)
     def test_ext_with_quotes(self):
         sn = self.Sender(ext='quotes=""')
         self.receive(sn.request_header)
-        parsed = parse_authorization_header(sn.request_header)
-        eq_(parsed['ext'], 'quotes=""')
 
+    @raises(BadHeaderValue)
     def test_ext_with_new_line(self):
         sn = self.Sender(ext="new line \n in the middle")
         self.receive(sn.request_header)
-        parsed = parse_authorization_header(sn.request_header)
-        eq_(parsed['ext'], "new line \n in the middle")
 
     def test_ext_with_equality_sign(self):
         sn = self.Sender(ext="foo=bar&foo2=bar2;foo3=bar3")
@@ -331,19 +336,47 @@ class TestSender(Base):
         parsed = parse_authorization_header(sn.request_header)
         eq_(parsed['ext'], "foo=bar&foo2=bar2;foo3=bar3")
 
+    @raises(HawkFail)
+    def test_non_hawk_scheme(self):
+        parse_authorization_header('Basic user:base64pw')
+
+    @raises(HawkFail)
+    def test_invalid_key(self):
+        parse_authorization_header('Hawk mac="validmac" unknownkey="value"')
+
+    def test_ext_with_all_valid_characters(self):
+        valid_characters = "!#$%&'()*+,-./:;<=>?@[]^_`{|}~ azAZ09_"
+        sender = self.Sender(ext=valid_characters)
+        parsed = parse_authorization_header(sender.request_header)
+        eq_(parsed['ext'], valid_characters)
+
     @raises(BadHeaderValue)
     def test_ext_with_illegal_chars(self):
         self.Sender(ext="something like \t is illegal")
+
+    def test_unparseable_header(self):
+        try:
+            parse_authorization_header('Hawk mac="somemac", unparseable')
+        except BadHeaderValue as exc:
+            error_msg = str(exc)
+            self.assertTrue("Couldn't parse Hawk header" in error_msg)
+            self.assertTrue("unparseable" in error_msg)
+        else:
+            self.fail('should raise')
 
     @raises(BadHeaderValue)
     def test_ext_with_illegal_unicode(self):
         self.Sender(ext=u'Ivan Kristi\u0107')
 
     @raises(BadHeaderValue)
+    def test_too_long_header(self):
+        sn = self.Sender(ext='a'*5000)
+        self.receive(sn.request_header)
+
+    @raises(BadHeaderValue)
     def test_ext_with_illegal_utf8(self):
         # This isn't allowed because the escaped byte chars are out of
-        # range. It's a little odd but this is what the Node lib does
-        # implicitly with its regex.
+        # range.
         self.Sender(ext=u'Ivan Kristi\u0107'.encode('utf8'))
 
     def test_app_ok(self):
@@ -689,19 +722,24 @@ class TestBewit(Base):
         expected = '123456\\1356420707\\kscxwNR2tJpP1T1zDLNPbB5UiKIU9tOSJXTUdG7X9h8=\\xandyandz'
         eq_(b64decode(bewit).decode('ascii'), expected)
 
-    def test_bewit_with_ext_and_backslashes(self):
+    @raises(BadHeaderValue)
+    def test_bewit_with_invalid_ext(self):
+        res = Resource(url='https://example.com/somewhere/over/the/rainbow',
+                       method='GET', credentials=self.credentials,
+                       timestamp=1356420407 + 300,
+                       nonce='',
+                       ext='xand\\yandz')
+        get_bewit(res)
+
+    @raises(BadHeaderValue)
+    def test_bewit_with_backslashes_in_id(self):
         credentials = self.credentials
         credentials['id'] = '123\\456'
         res = Resource(url='https://example.com/somewhere/over/the/rainbow',
                        method='GET', credentials=self.credentials,
                        timestamp=1356420407 + 300,
-                       nonce='',
-                       ext='xand\\yandz'
-                       )
-        bewit = get_bewit(res)
-
-        expected = '123456\\1356420707\\b82LLIxG5UDkaChLU953mC+SMrbniV1sb8KiZi9cSsc=\\xand\\yandz'
-        eq_(b64decode(bewit).decode('ascii'), expected)
+                       nonce='')
+        get_bewit(res)
 
     def test_bewit_with_port(self):
         res = Resource(url='https://example.com:8080/somewhere/over/the/rainbow',
@@ -759,14 +797,11 @@ class TestBewit(Base):
         self.assertEqual(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
         self.assertEqual(bewit.ext, 'xandyandz')
 
+    @raises(InvalidBewit)
     def test_parse_bewit_with_ext_and_backslashes(self):
         bewit = b'123456\\1356420707\\IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=\\xand\\yandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
-        bewit = parse_bewit(bewit)
-        self.assertEqual(bewit.id, '123456')
-        self.assertEqual(bewit.expiration, '1356420707')
-        self.assertEqual(bewit.mac, 'IGYmLgIqLrCe8CxvKPs4JlWIA+UjWJJouwgARiVhCAg=')
-        self.assertEqual(bewit.ext, 'xand\\yandz')
+        parse_bewit(bewit)
 
     @raises(InvalidBewit)
     def test_parse_invalid_bewit_with_only_one_part(self):
@@ -798,6 +833,7 @@ class TestBewit(Base):
         })
         self.assertTrue(check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10))
 
+    @raises(InvalidBewit)
     def test_validate_bewit_with_ext_and_backslashes(self):
         bewit = b'123456\\1356420707\\b82LLIxG5UDkaChLU953mC+SMrbniV1sb8KiZi9cSsc=\\xand\\yandz'
         bewit = urlsafe_b64encode(bewit).decode('ascii')
@@ -805,7 +841,7 @@ class TestBewit(Base):
         credential_lookup = self.make_credential_lookup({
             self.credentials['id']: self.credentials,
         })
-        self.assertTrue(check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10))
+        check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10)
 
     @raises(TokenExpired)
     def test_validate_expired_bewit(self):

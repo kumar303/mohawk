@@ -152,6 +152,7 @@ class Resource:
 
     def __init__(self, **kw):
         self.credentials = kw.pop('credentials')
+        self.credentials['id'] = prepare_header_val(self.credentials['id'])
         self.method = kw.pop('method').upper()
         self.content = kw.pop('content', None)
         self.content_type = kw.pop('content_type', None)
