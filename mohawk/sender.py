@@ -33,7 +33,7 @@ class Sender(HawkAuthority):
     :type content_type=EmptyValue: str
 
     :param always_hash_content=True:
-        When True, ``content`` and ``content_type`` cannot be None.
+        When True, ``content`` and ``content_type`` must be provided.
         Read :ref:`skipping-content-checks` to learn more.
     :type always_hash_content=True: bool
 
