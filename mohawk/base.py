@@ -22,6 +22,23 @@ default_ts_skew_in_seconds = 60
 log = logging.getLogger(__name__)
 
 
+class HawkEmptyValue(object):
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__)
+
+    def __ne__(self, other):
+        return (not self.__eq__(other))
+
+    def __nonzero__(self):
+        return False
+
+    def __bool__(self):
+        return False
+
+EmptyValue = HawkEmptyValue()
+
+
 class HawkAuthority:
 
     def _authorize(self, mac_type, parsed_header, resource,
@@ -155,8 +172,8 @@ class Resource:
         self.credentials = kw.pop('credentials')
         self.credentials['id'] = prepare_header_val(self.credentials['id'])
         self.method = kw.pop('method').upper()
-        self.content = kw.pop('content', None)
-        self.content_type = kw.pop('content_type', None)
+        self.content = kw.pop('content', EmptyValue)
+        self.content_type = kw.pop('content_type', EmptyValue)
         self.always_hash_content = kw.pop('always_hash_content', True)
         self.ext = kw.pop('ext', None)
         self.app = kw.pop('app', None)
@@ -194,7 +211,7 @@ class Resource:
         return self._content_hash
 
     def gen_content_hash(self):
-        if self.content is None or self.content_type is None:
+        if self.content == EmptyValue or self.content_type == EmptyValue:
             if self.always_hash_content:
                 # Be really strict about allowing developers to skip content
                 # hashing. If they get this far they may be unintentiionally

@@ -8,7 +8,7 @@ from nose.tools import eq_, raises
 import six
 
 from . import Receiver, Sender
-from .base import Resource
+from .base import Resource, EmptyValue
 from .exc import (AlreadyProcessed,
                   BadHeaderValue,
                   CredentialsLookupError,
@@ -145,13 +145,15 @@ class TestSender(Base):
 
     @raises(MissingContent)
     def test_missing_payload_details(self):
-        self.Sender(method='POST', content=None, content_type=None)
+        self.Sender(method='POST', content=EmptyValue,
+                    content_type=EmptyValue)
 
     def test_skip_payload_hashing(self):
         method = 'POST'
         content = '{"bar": "foobs"}'
         content_type = 'application/json'
-        sn = self.Sender(method=method, content=None, content_type=None,
+        sn = self.Sender(method=method, content=EmptyValue,
+                         content_type=EmptyValue,
                          always_hash_content=False)
         self.receive(sn.request_header, method=method, content=content,
                      content_type=content_type,
@@ -159,13 +161,13 @@ class TestSender(Base):
 
     @raises(MissingContent)
     def test_cannot_skip_content_only(self):
-        self.Sender(method='POST', content=None,
+        self.Sender(method='POST', content=EmptyValue,
                     content_type='application/json')
 
     @raises(MissingContent)
     def test_cannot_skip_content_type_only(self):
         self.Sender(method='POST', content='{"foo": "bar"}',
-                    content_type=None)
+                    content_type=EmptyValue)
 
     @raises(MacMismatch)
     def test_tamper_with_host(self):
@@ -601,7 +603,8 @@ class TestReceiver(Base):
 
     @raises(MisComputedContentHash)
     def test_unexpected_unhashed_content(self):
-        self.receive(sender_kw=dict(content=None, content_type=None,
+        self.receive(sender_kw=dict(content=EmptyValue,
+                                    content_type=EmptyValue,
                                     always_hash_content=False))
 
     @raises(MissingContent)
@@ -609,14 +612,14 @@ class TestReceiver(Base):
         content_type = 'text/plain'
         self.receive(sender_kw=dict(content='<content>',
                                     content_type=content_type),
-                     content=None, content_type=content_type)
+                     content=EmptyValue, content_type=content_type)
 
     @raises(MissingContent)
     def test_cannot_receive_empty_content_type_only(self):
         content = '<content>'
         self.receive(sender_kw=dict(content=content,
                                     content_type='text/plain'),
-                     content=content, content_type=None)
+                     content=content, content_type=EmptyValue)
 
     @raises(MisComputedContentHash)
     def test_receive_wrong_content_type(self):
