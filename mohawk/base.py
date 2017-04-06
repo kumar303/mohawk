@@ -8,7 +8,8 @@ from six.moves.urllib.parse import urlparse
 from .exc import (AlreadyProcessed,
                   MacMismatch,
                   MisComputedContentHash,
-                  TokenExpired)
+                  TokenExpired,
+                  MissingContent)
 from .util import (calculate_mac,
                    calculate_payload_hash,
                    calculate_ts_mac,
@@ -198,7 +199,7 @@ class Resource:
                 # Be really strict about allowing developers to skip content
                 # hashing. If they get this far they may be unintentiionally
                 # skipping it.
-                raise ValueError(
+                raise MissingContent(
                     'payload content and/or content_type cannot be '
                     'empty without an explicit allowance')
             log.debug('NOT hashing content')

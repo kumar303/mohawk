@@ -18,7 +18,8 @@ from .exc import (AlreadyProcessed,
                   MisComputedContentHash,
                   MissingAuthorization,
                   TokenExpired,
-                  InvalidBewit)
+                  InvalidBewit,
+                  MissingContent)
 from .util import (parse_authorization_header,
                    utc_now,
                    calculate_ts_mac,
@@ -142,7 +143,7 @@ class TestSender(Base):
         self.receive(sn.request_header, method=method, content=content,
                      content_type='application/json; charset=other')
 
-    @raises(ValueError)
+    @raises(MissingContent)
     def test_missing_payload_details(self):
         self.Sender(method='POST', content=None, content_type=None)
 
@@ -156,12 +157,12 @@ class TestSender(Base):
                      content_type=content_type,
                      accept_untrusted_content=True)
 
-    @raises(ValueError)
+    @raises(MissingContent)
     def test_cannot_skip_content_only(self):
         self.Sender(method='POST', content=None,
                     content_type='application/json')
 
-    @raises(ValueError)
+    @raises(MissingContent)
     def test_cannot_skip_content_type_only(self):
         self.Sender(method='POST', content='{"foo": "bar"}',
                     content_type=None)
@@ -603,14 +604,14 @@ class TestReceiver(Base):
         self.receive(sender_kw=dict(content=None, content_type=None,
                                     always_hash_content=False))
 
-    @raises(ValueError)
+    @raises(MissingContent)
     def test_cannot_receive_empty_content_only(self):
         content_type = 'text/plain'
         self.receive(sender_kw=dict(content='<content>',
                                     content_type=content_type),
                      content=None, content_type=content_type)
 
-    @raises(ValueError)
+    @raises(MissingContent)
     def test_cannot_receive_empty_content_type_only(self):
         content = '<content>'
         self.receive(sender_kw=dict(content=content,

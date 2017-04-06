@@ -101,3 +101,12 @@ class InvalidBewit(HawkFail):
     The bewit is invalid; e.g. it doesn't contain the right number of
     parameters.
     """
+
+
+class MissingContent(HawkFail):
+    """
+    A payload's `content` or `content_type` were not provided, and
+    no allowance was explicitly made.
+
+    See :ref:`skipping-content-checks` for details.
+    """
