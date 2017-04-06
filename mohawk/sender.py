@@ -124,10 +124,8 @@ class Sender(HawkAuthority):
         :type content_type=None: str
 
         :param accept_untrusted_content=False:
-            When True, allow responses that do not hash their content or
-            allow None type ``content`` and ``content_type``
-            arguments. Read :ref:`skipping-content-checks`
-            to learn more.
+            When True, allow responses that do not hash their content.
+            Read :ref:`skipping-content-checks` to learn more.
         :type accept_untrusted_content=False: bool
 
         :param localtime_offset_in_seconds=0:

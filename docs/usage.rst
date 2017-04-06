@@ -387,7 +387,13 @@ accept unsigned content with ``accept_untrusted_content=True``:
     ...                     sender.request_header,
     ...                     request['url'],
     ...                     request['method'],
+    ...                     content=request['content'],
+    ...                     content_type=request['headers']['Content-Type'],
     ...                     accept_untrusted_content=True)
+
+This will skip checking the hash of ``content`` and ``content_type`` only if
+the ``Authorization`` header omits the ``hash`` attribute. If the ``hash``
+attribute is present, it will be checked as normal.
 
 Logging
 =======
