@@ -221,7 +221,7 @@ class Resource:
                 # skipping it.
                 raise MissingContent(
                     'payload content and/or content_type cannot be '
-                    'empty without an explicit allowance')
+                    'empty when always_hash_content is True')
             log.debug('NOT hashing content')
             self._content_hash = None
         else:
