@@ -351,15 +351,15 @@ the same ``seen_nonce`` keyword:
 Skipping content checks
 =======================
 
-In some cases you may not be able to sign request/response content. For example,
-the content could be too large to fit in memory. If you run into this, Hawk
-might not be the best fit for you but Hawk does allow you to skip content
-checks if you wish.
+In some cases you may not be able to hash request/response content. For
+example, the content could be too large. If you run into this, Hawk
+might not be the best fit for you but Hawk does allow you to accept
+content without a declared hash if you wish.
 
 .. important::
 
-    By skipping content checks both the sender and receiver are
-    susceptible to content tampering.
+    By allowing content without a declared hash, both the sender and
+    receiver are susceptible to content tampering.
 
 You can send a request without signing the content by passing this keyword
 argument to a :class:`mohawk.Sender`:
@@ -378,8 +378,8 @@ Now you'll get an ``Authorization`` header without a ``hash`` attribute:
     >>> sender.request_header
     u'Hawk mac="...", id="some-sender", ts="...", nonce="..."'
 
-The :class:`mohawk.Receiver` must also be constructed to
-accept unsigned content with ``accept_untrusted_content=True``:
+The :class:`mohawk.Receiver` must also be constructed to accept content
+without a declared hash using ``accept_untrusted_content=True``:
 
 .. doctest:: usage
 
@@ -387,7 +387,13 @@ accept unsigned content with ``accept_untrusted_content=True``:
     ...                     sender.request_header,
     ...                     request['url'],
     ...                     request['method'],
+    ...                     content=request['content'],
+    ...                     content_type=request['headers']['Content-Type'],
     ...                     accept_untrusted_content=True)
+
+This will skip checking the hash of ``content`` and ``content_type`` only if
+the ``Authorization`` header omits the ``hash`` attribute. If the ``hash``
+attribute is present, it will be checked as normal.
 
 Logging
 =======
