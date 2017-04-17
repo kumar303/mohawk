@@ -105,8 +105,7 @@ class InvalidBewit(HawkFail):
 
 class MissingContent(HawkFail):
     """
-    A payload's `content` or `content_type` were not provided, and
-    no allowance was explicitly made.
+    A payload's `content` or `content_type` were not provided.
 
     See :ref:`skipping-content-checks` for details.
     """
