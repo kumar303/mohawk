@@ -113,6 +113,16 @@ Changelog
   - **Breaking**: Escape characters in header values are no longer allowed,
     potentially breaking clients that depend on this behavior.
   - Introduced max limit of 4096 characters in the Authorization header
+  - Changed default values of ``content`` and ``content_type`` arguments to
+    :class:`mohawk.base.EmptyValue` in order to differentiate between
+    misconfiguration and cases where these arguments are explicitly given as
+    ``None`` (as with some web frameworks). See :ref:`skipping-content-checks`
+    for more details.
+  - Failing to pass ``content`` and ``content_type`` arguments to
+    :class:`mohawk.Receiver` or :method:`mohawk.Sender.accept_response`
+    without specifying ``accept_untrusted_content=True`` will now raise
+    :class:`mohawk.exc.MissingContent` instead of :exception:`ValueError`.
+
 
 - **0.3.4** (2017-01-07)
 
