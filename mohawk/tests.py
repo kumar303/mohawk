@@ -159,6 +159,16 @@ class TestSender(Base):
                      content_type=content_type,
                      accept_untrusted_content=True)
 
+    def test_empty_payload_hashing(self):
+        method = 'GET'
+        content = None
+        content_type = None
+        sn = self.Sender(method=method, content=content,
+                         content_type=content_type)
+        self.receive(sn.request_header, method=method, content=content,
+                     content_type=content_type,
+                     accept_untrusted_content=True)
+
     @raises(MissingContent)
     def test_cannot_skip_content_only(self):
         self.Sender(method='POST', content=EmptyValue,
