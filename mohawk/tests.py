@@ -165,6 +165,7 @@ class TestSender(Base):
         content_type = None
         sn = self.Sender(method=method, content=content,
                          content_type=content_type)
+        self.assertTrue('hash="' in sn.request_header)
         self.receive(sn.request_header, method=method, content=content,
                      content_type=content_type,
                      accept_untrusted_content=True)
