@@ -155,11 +155,33 @@ class TestSender(Base):
         sn = self.Sender(method=method, content=EmptyValue,
                          content_type=EmptyValue,
                          always_hash_content=False)
+        self.assertFalse('hash="' in sn.request_header)
         self.receive(sn.request_header, method=method, content=content,
                      content_type=content_type,
                      accept_untrusted_content=True)
 
     def test_empty_payload_hashing(self):
+        method = 'GET'
+        content = None
+        content_type = None
+        sn = self.Sender(method=method, content=content,
+                         content_type=content_type)
+        self.assertTrue('hash="' in sn.request_header)
+        self.receive(sn.request_header, method=method, content=content,
+                     content_type=content_type)
+
+    def test_empty_payload_hashing_always_hash_false(self):
+        method = 'GET'
+        content = None
+        content_type = None
+        sn = self.Sender(method=method, content=content,
+                         content_type=content_type,
+                         always_hash_content=False)
+        self.assertTrue('hash="' in sn.request_header)
+        self.receive(sn.request_header, method=method, content=content,
+                     content_type=content_type)
+
+    def test_empty_payload_hashing_accept_untrusted(self):
         method = 'GET'
         content = None
         content_type = None
