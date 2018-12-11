@@ -634,9 +634,27 @@ class TestReceiver(Base):
         wrong_sender = self.sender
         self.receive(content='TAMPERED WITH', sender=wrong_sender)
 
-    @raises(MisComputedContentHash)
-    def test_unexpected_unhashed_content(self):
+    def test_expected_unhashed_empty_content(self):
+        # The receiver will receive empty strings for content and content_type
+        # and no content hash in the auth header.
+        # This is to account for callers that might provide empty strings for
+        # the payload when in fact there is literally no content. In this case,
+        # mohawk depends on the presence of the content hash in the auth header
+        # to determine how to treat the empty strings: no hash in the header
+        # implies that no hashing is expected to occur on the server.
         self.receive(sender_kw=dict(content=EmptyValue,
+                                    content_type=EmptyValue,
+                                    always_hash_content=False))
+
+    def test_expected_unhashed_no_content(self):
+        # The receiver will receive None for content and content_type and no
+        # content hash in the auth header.
+        # This is like test_expected_unhashed_empty_content(), but tests for the
+        # less ambiguous case where the caller has explicitly passed in None to
+        # indicate that there is no content to hash.
+        self.receive(content=None,
+                     content_type=None,
+                     sender_kw=dict(content=EmptyValue,
                                     content_type=EmptyValue,
                                     always_hash_content=False))
 
