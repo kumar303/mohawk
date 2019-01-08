@@ -67,15 +67,15 @@ class HawkAuthority:
             if not resource.content and not resource.content_type:
                 # It is acceptable to not receive a hash if there is no content
                 # to hash.
-                log.debug('NOT calculating/verifiying payload hash '
-                          '(no hash in header, but no content either)')
+                log.debug('NOT calculating/verifying payload hash '
+                          '(no hash in header, request body is empty)')
                 check_hash = False
             elif accept_untrusted_content:
                 # Allow the request, even if it has content. Missing content or
                 # content_type values will be coerced to the empty string for
                 # hashing purposes.
-                log.debug('NOT calculating/verifiying payload hash '
-                          '(no hash in header)')
+                log.debug('NOT calculating/verifying payload hash '
+                          '(no hash in header, accept_untrusted_content=True)')
                 check_hash = False
 
         if check_hash:
