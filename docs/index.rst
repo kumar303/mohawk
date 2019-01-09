@@ -40,6 +40,7 @@ It was redesigned to be more intuitive to developers, less prone to security pro
 .. _`HTTP MAC access authentication`: http://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-05
 .. _`OAuth 1.0`: http://tools.ietf.org/html/rfc5849
 
+
 Installation
 ============
 
