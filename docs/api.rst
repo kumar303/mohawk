@@ -26,3 +26,13 @@ Exceptions
 
 .. automodule:: mohawk.exc
     :members:
+
+Other
+=====
+
+.. autodata:: mohawk.base.EmptyValue
+
+    This represents an empty value but not ``None``.
+
+    This is typically used as a placeholder of a default value
+    so that internal code can differentiate it from ``None``.

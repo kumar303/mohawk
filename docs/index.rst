@@ -113,18 +113,17 @@ Changelog
   - A sender is allowed to omit the content hash as long as their request has no
     content. The :class:`mohawk.Receiver` will skip the content hash check
     in this situation, regardless of the value of
-    :ref:`accept_untrusted_content`. See :ref:`empty-requests` for more details.
+    ``accept_untrusted_content``. See :ref:`empty-requests` for more details.
   - Introduced max limit of 4096 characters in the Authorization header
   - Changed default values of ``content`` and ``content_type`` arguments to
-    :class:`mohawk.base.EmptyValue` in order to differentiate between
+    :data:`mohawk.base.EmptyValue` in order to differentiate between
     misconfiguration and cases where these arguments are explicitly given as
     ``None`` (as with some web frameworks). See :ref:`skipping-content-checks`
     for more details.
   - Failing to pass ``content`` and ``content_type`` arguments to
-    :class:`mohawk.Receiver` or :method:`mohawk.Sender.accept_response`
+    :class:`mohawk.Receiver` or :meth:`mohawk.Sender.accept_response`
     without specifying ``accept_untrusted_content=True`` will now raise
-    :class:`mohawk.exc.MissingContent` instead of :exception:`ValueError`.
-  - Add Python 3.7 to tox/Travis env list
+    :exc:`mohawk.exc.MissingContent` instead of :exc:`ValueError`.
 
 
 - **0.3.4** (2017-01-07)

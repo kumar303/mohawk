@@ -369,7 +369,7 @@ argument to a :class:`mohawk.Sender`:
     >>> sender = Sender(credentials, url, method, always_hash_content=False)
 
 This says to skip hashing of the ``content`` and ``content_type`` values
-if they are both :attr:``mohawk.EmptyValue``.
+if they are both :data:`mohawk.base.EmptyValue`.
 
 Now you'll get an ``Authorization`` header without a ``hash`` attribute:
 
