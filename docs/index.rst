@@ -45,7 +45,7 @@ Installation
 
 Requirements:
 
-* Python 2.6+ or 3.3+
+* Python 2.6+ or 3.4+
 * `six`_
 
 Using `pip`_::
