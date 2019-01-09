@@ -97,7 +97,6 @@ into specific web frameworks:
 TODO
 ====
 
-* Implement bewit. **The bewit URI scheme is not fully implemented at this time.**
 * Support NTP-like (but secure) synchronization for local server time.
   See `TLSdate <http://linux-audit.com/tlsdate-the-secure-alternative-for-ntpd-ntpdate-and-rdate/>`_.
 * Support auto-retrying a :class:`mohawk.Sender` request with an offset if
@@ -108,10 +107,14 @@ Changelog
 
 - **UNRELEASED**
 
-  - **Security**: Bewit MACs were not compared in constant time and were thus
+  - **Security related**: Bewit MACs were not compared in constant time and were thus
     possibly circumventable by an attacker.
-  - **Breaking**: Escape characters in header values are no longer allowed,
+  - **Breaking change**: Escape characters in header values are no longer allowed,
     potentially breaking clients that depend on this behavior.
+  - A sender is allowed to omit the content hash as long as their request has no
+    content. The :class:`mohawk.Receiver` will skip the content hash check
+    in this situation, regardless of the value of
+    :ref:`accept_untrusted_content`. See :ref:`empty-requests` for more details.
   - Introduced max limit of 4096 characters in the Authorization header
   - Changed default values of ``content`` and ``content_type`` arguments to
     :class:`mohawk.base.EmptyValue` in order to differentiate between
@@ -122,10 +125,6 @@ Changelog
     :class:`mohawk.Receiver` or :method:`mohawk.Sender.accept_response`
     without specifying ``accept_untrusted_content=True`` will now raise
     :class:`mohawk.exc.MissingContent` instead of :exception:`ValueError`.
-  - Allow sender to omit the payload hash as long as the request has no
-    content. The :class:`mohawk.Receiver` will skip the content hash check
-    in this situation, regardless of the value of
-    :ref:`accept_untrusted_content`.
   - Add Python 3.7 to tox/Travis env list
 
 
