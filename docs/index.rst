@@ -106,10 +106,15 @@ Changelog
 
 - **UNRELEASED**
 
+  - (Unreleased features should be listed here.)
+
+- **1.0.0** (2019-01-09)
+
   - **Security related**: Bewit MACs were not compared in constant time and were thus
     possibly circumventable by an attacker.
-  - **Breaking change**: Escape characters in header values are no longer allowed,
-    potentially breaking clients that depend on this behavior.
+  - **Breaking change**: Escape characters in header values (such as a back slash)
+    are no longer allowed, potentially breaking clients that depended on this behavior.
+    See https://github.com/kumar303/mohawk/issues/34
   - A sender is allowed to omit the content hash as long as their request has no
     content. The :class:`mohawk.Receiver` will skip the content hash check
     in this situation, regardless of the value of
