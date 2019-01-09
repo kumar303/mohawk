@@ -178,7 +178,59 @@ class HawkAuthority:
 
 class Resource:
     """
-    Normalized request/response resource.
+    Normalized request / response resource.
+
+    :param credentials:
+        A dict of credentials; it must have the keys:
+        ``id``, ``key``, and ``algorithm``.
+        See :ref:`sending-request` for an example.
+    :type credentials_map: dict
+
+    :param url: Absolute URL of the request / response.
+    :type url: str
+
+    :param method: Method of the request / response. E.G. POST, GET
+    :type method: str
+
+    :param content=EmptyValue: Byte string of request / response body.
+    :type content=EmptyValue: str
+
+    :param content_type=EmptyValue: content-type header value for request / response.
+    :type content_type=EmptyValue: str
+
+    :param always_hash_content=True:
+        When True, ``content`` and ``content_type`` must be provided.
+        Read :ref:`skipping-content-checks` to learn more.
+    :type always_hash_content=True: bool
+
+    :param ext=None:
+        An external `Hawk`_ string. If not None, this value will be
+        signed so that the sender can trust it.
+    :type ext=None: str
+
+    :param app=None:
+        A `Hawk`_ string identifying an external application.
+    :type app=None: str
+
+    :param dlg=None:
+        A `Hawk`_ string identifying a "delegated by" value.
+    :type dlg=None: str
+
+    :param timestamp=utc_now():
+        A unix timestamp integer, in UTC
+    :type timestamp: int
+
+    :param nonce=None:
+        A string that when coupled with the timestamp will
+        uniquely identify this request / response.
+    :type nonce=None: str
+
+    :param seen_nonce=None:
+        A callable that returns True if a nonce has been seen.
+        See :ref:`nonce` for details.
+    :type seen_nonce=None: callable
+
+    .. _`Hawk`: https://github.com/hueniverse/hawk
     """
 
     def __init__(self, **kw):

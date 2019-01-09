@@ -34,7 +34,7 @@ section.
     requests = Requests()
 
     credentials = {'id': 'some-sender',
-                   'key': 'some complicated SEKRET',
+                   'key': 'a long, complicated secret',
                    'algorithm': 'sha256'}
     allowed_senders = {}
     allowed_senders['some-sender'] = credentials
@@ -44,6 +44,8 @@ section.
             return False
         def set(self, *a, **kw): pass
     memcache = Memcache()
+
+.. _`sending-request`:
 
 Sending a request
 =================
@@ -64,7 +66,7 @@ with all the elements of the request that you need to sign:
 
     >>> from mohawk import Sender
     >>> sender = Sender({'id': 'some-sender',
-    ...                  'key': 'some complicated SEKRET',
+    ...                  'key': 'a long, complicated secret',
     ...                  'algorithm': 'sha256'},
     ...                 url,
     ...                 method,
@@ -220,7 +222,7 @@ exception object to respond correctly like this:
     :hide:
 
     >>> exp_sender = Sender({'id': 'some-sender',
-    ...                      'key': 'some complicated SEKRET',
+    ...                      'key': 'a long, complicated secret',
     ...                      'algorithm': 'sha256'},
     ...                     url,
     ...                     method,
@@ -336,7 +338,7 @@ the same ``seen_nonce`` keyword:
 .. doctest:: usage
 
     >>> sender = Sender({'id': 'some-sender',
-    ...                  'key': 'some complicated SEKRET',
+    ...                  'key': 'a long, complicated secret',
     ...                  'algorithm': 'sha256'},
     ...                 url,
     ...                 method,
@@ -409,6 +411,106 @@ empty content and some libraries may or may not hash the content.
 If the ``hash`` attribute *is* present, a ``None`` value for either
 ``content`` or ``content_type`` will be coerced to an empty string
 prior to hashing.
+
+Generating protected URLs
+=========================
+
+Hawk lets you protect a URL with a token derived from a secret key.
+After a period of time, access to the URL will expire.
+As an example, you could use this to deliver a URL for purchased media,
+such a zip file of MP3s. The user could access the URL for a short period
+of time but after that, the same URL would not be accessible.
+
+In the Hawk spec, this is referred to as `Single URI Authorization, or bewit`_.
+
+.. _`Single URI Authorization, or bewit`: https://github.com/hueniverse/hawk/#single-uri-authorization
+
+Here's an example of protecting access to this URL with Mohawk:
+
+.. doctest:: usage
+
+    >>> url = 'https://site.org/purchases/music-album.zip'
+
+Let's say you want to allow access for 5 minutes:
+
+
+.. doctest:: usage
+
+    >>> from mohawk.util import utc_now
+    >>> url_expires_at = utc_now() + (60 * 5)
+
+Set up Hawk credentials like in previous examples:
+
+.. doctest:: usage
+
+    >>> credentials = {
+    ...     'id': 'some-recipient',
+    ...     'key': 'a long, complicated secret',
+    ...     'algorithm': 'sha256'
+    ... }
+
+
+Define the resource that you want to protect:
+
+.. doctest:: usage
+
+    >>> from mohawk.base import Resource
+    >>> resource = Resource(
+    ...     credentials=credentials,
+    ...     url=url,
+    ...     method='GET',
+    ...     nonce='',
+    ...     timestamp=url_expires_at,
+    ... )
+
+Generate a bewit token:
+
+.. doctest:: usage
+
+    >>> from mohawk.bewit import get_bewit
+    >>> bewit = get_bewit(resource)
+
+Add that token as a ``bewit`` query string parameter back to the same URL:
+
+.. doctest:: usage
+
+    >>> protected_url = '{url}?bewit={bewit}'.format(url=url, bewit=bewit)
+    >>> protected_url
+    'https://site.org/purchases/music-album.zip?bewit=...'
+
+Now you can deliver this bewit protected URL to the recipient.
+
+Serving protected URLs
+======================
+
+When handling a request for a bewit protected URL on the server, you can
+begin by checking the bewit to make sure it's valid.
+If ``True``, the server can respond with access to the resource.
+The ``check_bewit`` function returns ``True`` or ``False`` and will also
+raise an exception for invalid ``bewit`` values.
+
+.. doctest:: usage
+
+    >>> allowed_recipients = {}
+    >>> allowed_recipients['some-recipient'] = credentials
+    >>> def lookup_credentials(recipient_id):
+    ...     if recipient_id in allowed_recipients:
+    ...         # Return a credentials dictionary
+    ...         return allowed_recipients[recipient_id]
+    ...     else:
+    ...         raise LookupError('unknown recipient_id')
+    >>> from mohawk.bewit import check_bewit
+    >>> check_bewit(protected_url, credential_lookup=lookup_credentials)
+    True
+
+
+.. note::
+
+   Well, that was complicated! At a future time,
+   ``get_bewit`` and ``check_bewit`` will be complimented with a higher
+   level function that is easier to work with.
+   See https://github.com/kumar303/mohawk/issues/17
+
 
 Logging
 =======

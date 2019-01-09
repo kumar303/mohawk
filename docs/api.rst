@@ -27,8 +27,10 @@ Exceptions
 .. automodule:: mohawk.exc
     :members:
 
-Other
-=====
+Base
+====
+
+.. autoclass:: mohawk.base.Resource
 
 .. autodata:: mohawk.base.EmptyValue
 
