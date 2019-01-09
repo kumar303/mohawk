@@ -60,20 +60,30 @@ class HawkAuthority:
                               'theirs: {theirs}'
                               .format(ours=mac, theirs=their_mac))
 
-        if 'hash' not in parsed_header and accept_untrusted_content:
-            # The request did not hash its content.
-            log.debug('NOT calculating/verifiying payload hash '
-                      '(no hash in header)')
-            check_hash = False
-            content_hash = None
-        else:
-            check_hash = True
-            content_hash = resource.gen_content_hash()
+        check_hash = True
 
-        if check_hash and not their_hash:
-            log.info('request unexpectedly did not hash its content')
+        if 'hash' not in parsed_header:
+            # The request did not hash its content.
+            if not resource.content and not resource.content_type:
+                # It is acceptable to not receive a hash if there is no content
+                # to hash.
+                log.debug('NOT calculating/verifying payload hash '
+                          '(no hash in header, request body is empty)')
+                check_hash = False
+            elif accept_untrusted_content:
+                # Allow the request, even if it has content. Missing content or
+                # content_type values will be coerced to the empty string for
+                # hashing purposes.
+                log.debug('NOT calculating/verifying payload hash '
+                          '(no hash in header, accept_untrusted_content=True)')
+                check_hash = False
 
         if check_hash:
+            if not their_hash:
+                log.info('request unexpectedly did not hash its content')
+
+            content_hash = resource.gen_content_hash()
+
             if not strings_match(content_hash, their_hash):
                 # The hash declared in the header is incorrect.
                 # Content could have been tampered with.

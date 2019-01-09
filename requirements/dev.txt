@@ -3,9 +3,10 @@ mock >= 1.0.1
 nose >= 1.3.0
 
 # For documentation.
-Sphinx >= 1.2.1
+docutils < 0.13.1
+Sphinx >= 1.2.1, < 1.5
 sphinx-rtd-theme >= 0.1.5
 
 # For publishing to PyPI.
-wheel >= 0.29.0
-twine >= 1.6.5
+wheel == 0.29.0
+twine >= 1.6.5, < 1.8

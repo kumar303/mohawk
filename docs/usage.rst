@@ -369,7 +369,7 @@ argument to a :class:`mohawk.Sender`:
     >>> sender = Sender(credentials, url, method, always_hash_content=False)
 
 This says to skip hashing of the ``content`` and ``content_type`` values
-if they are both ``None``.
+if they are both :attr:``mohawk.EmptyValue``.
 
 Now you'll get an ``Authorization`` header without a ``hash`` attribute:
 
@@ -394,6 +394,18 @@ without a declared hash using ``accept_untrusted_content=True``:
 This will skip checking the hash of ``content`` and ``content_type`` only if
 the ``Authorization`` header omits the ``hash`` attribute. If the ``hash``
 attribute is present, it will be checked as normal.
+
+For requests whose ``content`` (and by extension ``content_type``) is ``None``
+or ``''``, it is acceptable for the sender to omit the declared hash,
+regardless of the ``accept_untrusted_content`` value provided to the
+:class:`mohawk.Receiver`. For example, a ``GET`` request typically has
+empty content and some libraries may or may not hash the content.
+
+If the ``hash`` attribute is present and ``accept_untrusted_content`` is
+``False``, a ``None`` value for either ``content`` or ``content_type``will
+be coerced to ``''`` prior to hashing. This is to account for some dependent
+libraries that may provide the empty string even when no content is present
+on the request.
 
 Logging
 =======

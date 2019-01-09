@@ -122,6 +122,11 @@ Changelog
     :class:`mohawk.Receiver` or :method:`mohawk.Sender.accept_response`
     without specifying ``accept_untrusted_content=True`` will now raise
     :class:`mohawk.exc.MissingContent` instead of :exception:`ValueError`.
+  - Allow sender to omit the payload hash as long as the request has no
+    content. The :class:`mohawk.Receiver` will skip the content hash check
+    in this situation, regardless of the value of
+    :ref:`accept_untrusted_content`.
+  - Add Python 3.7 to tox/Travis env list
 
 
 - **0.3.4** (2017-01-07)

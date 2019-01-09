@@ -634,11 +634,111 @@ class TestReceiver(Base):
         wrong_sender = self.sender
         self.receive(content='TAMPERED WITH', sender=wrong_sender)
 
-    @raises(MisComputedContentHash)
-    def test_unexpected_unhashed_content(self):
-        self.receive(sender_kw=dict(content=EmptyValue,
+    def test_expected_unhashed_empty_content(self):
+        # This test sets up a scenario where the receiver will receive empty
+        # strings for content and content_type and no content hash in the auth
+        # header.
+        # This is to account for callers that might provide empty strings for
+        # the payload when in fact there is literally no content. In this case,
+        # mohawk depends on the presence of the content hash in the auth header
+        # to determine how to treat the empty strings: no hash in the header
+        # implies that no hashing is expected to occur on the server.
+        self.receive(content='',
+                     content_type='',
+                     sender_kw=dict(content=EmptyValue,
                                     content_type=EmptyValue,
                                     always_hash_content=False))
+
+    @raises(MisComputedContentHash)
+    def test_expected_unhashed_empty_content_with_content_type(self):
+        # This test sets up a scenario where the receiver will receive an
+        # empty content string and no content hash in the auth header, but
+        # some value for content_type.
+        # This is to confirm that the hash is calculated and compared (to the
+        # hash of mock empty payload, which should fail) when it appears that
+        # the sender has sent a 0-length payload body.
+        self.receive(content='',
+                     content_type='text/plain',
+                     sender_kw=dict(content=EmptyValue,
+                                    content_type=EmptyValue,
+                                    always_hash_content=False))
+
+    @raises(MisComputedContentHash)
+    def test_expected_unhashed_content_with_empty_content_type(self):
+        # This test sets up a scenario where the receiver will receive some
+        # content but the empty string for the content_type and no content hash
+        # in the auth header.
+        # This is to confirm that the hash is calculated and compared (to the
+        # hash of mock empty payload, which should fail) when the sender has
+        # sent unhashed content.
+        self.receive(content='some content',
+                     content_type='',
+                     sender_kw=dict(content=EmptyValue,
+                                    content_type=EmptyValue,
+                                    always_hash_content=False))
+
+    def test_empty_content_with_content_type(self):
+        # This test sets up a scenario where the receiver will receive an
+        # empty content string, some value for content_type and a content hash.
+        # This is to confirm that the hash is calculated and compared correctly
+        # when the sender has sent a hashed 0-length payload body.
+        self.receive(content='',
+                     content_type='text/plain',
+                     sender_kw=dict(content='',
+                                    content_type='text/plain'))
+
+    def test_expected_unhashed_no_content(self):
+        # This test sets up a scenario where the receiver will receive None for
+        # content and content_type and no content hash in the auth header.
+        # This is like test_expected_unhashed_empty_content(), but tests for
+        # the less ambiguous case where the caller has explicitly passed in None
+        # to indicate that there is no content to hash.
+        self.receive(content=None,
+                     content_type=None,
+                     sender_kw=dict(content=EmptyValue,
+                                    content_type=EmptyValue,
+                                    always_hash_content=False))
+
+    @raises(MisComputedContentHash)
+    def test_expected_unhashed_no_content_with_content_type(self):
+        # This test sets up a scenario where the receiver will receive None for
+        # content and no content hash in the auth header, but some value for
+        # content_type.
+        # In this case, the content will be coerced to the empty string for
+        # hashing purposes. The request should fail, as the there is no content
+        # hash in the request to compare against. While this may not be in
+        # accordance with the js reference spec, it's the safest (ie. most
+        # secure) way of handling this bizarre set of circumstances.
+        self.receive(content=None,
+                     content_type='text/plain',
+                     sender_kw=dict(content=EmptyValue,
+                                    content_type=EmptyValue,
+                                    always_hash_content=False))
+
+    @raises(MisComputedContentHash)
+    def test_expected_unhashed_content_with_no_content_type(self):
+        # This test sets up a scenario where the receiver will receive some
+        # content but no value for the content_type and no content hash in
+        # the auth header.
+        # This is to confirm that the hash is calculated and compared (to the
+        # hash of mock empty payload, which should fail) when the sender has
+        # sent unhashed content.
+        self.receive(content='some content',
+                     content_type=None,
+                     sender_kw=dict(content=EmptyValue,
+                                    content_type=EmptyValue,
+                                    always_hash_content=False))
+
+    def test_no_content_with_content_type(self):
+        # This test sets up a scenario where the receiver will receive None for
+        # the content string, some value for content_type and a content hash.
+        # This is to confirm that coercing None to the empty string when a hash
+        # is expected allows the hash to be calculated and compared correctly
+        # as if the sender has sent a hashed 0-length payload body.
+        self.receive(content=None,
+                     content_type='text/plain',
+                     sender_kw=dict(content='',
+                                    content_type='text/plain'))
 
     @raises(MissingContent)
     def test_cannot_receive_empty_content_only(self):
