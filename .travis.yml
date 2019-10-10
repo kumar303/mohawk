@@ -1,4 +1,4 @@
-sudo: false
+dist: trusty  # For python 2.6
 language: python
 matrix:
     include:

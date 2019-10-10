@@ -22,6 +22,7 @@ from .exc import (AlreadyProcessed,
                   MissingContent)
 from .util import (parse_authorization_header,
                    utc_now,
+                   calculate_payload_hash,
                    calculate_ts_mac,
                    validate_credentials)
 from .bewit import (get_bewit,
@@ -442,6 +443,25 @@ class TestSender(Base):
         sn = self.Sender(dlg=dlg, app='some-app')
         header = sn.request_header.replace(dlg, 'TAMPERED-WITH')
         self.receive(header)
+
+    def test_file_content(self):
+        method = "POST"
+        content = six.BytesIO(b"FILE CONTENT")
+        sn = self.Sender(method, content=content)
+        self.receive(sn.request_header, method=method, content=content.getvalue())
+
+    def test_binary_file_content(self):
+        method = "POST"
+        content = six.BytesIO(b"\x00\xffCONTENT\xff\x00")
+        sn = self.Sender(method, content=content)
+        self.receive(sn.request_header, method=method, content=content.getvalue())
+
+    @raises(MisComputedContentHash)
+    def test_bad_file_content(self):
+        method = "POST"
+        content = six.BytesIO(b"FILE CONTENT")
+        sn = self.Sender(method, content=content)
+        self.receive(sn.request_header, method=method, content="BAD FILE CONTENT")
 
 
 class TestReceiver(Base):
@@ -999,3 +1019,12 @@ class TestBewit(Base):
             'other_id': self.credentials,
         })
         check_bewit(url, credential_lookup=credential_lookup, now=1356420407 + 10)
+
+
+class TestPayloadHash(Base):
+    def test_hash_file_read_blocks(self):
+        payload = six.BytesIO(b"\x00\xffhello world\xff\x00")
+        h1 = calculate_payload_hash(payload, 'sha256', 'application/json', block_size=1)
+        payload.seek(0)
+        h2 = calculate_payload_hash(payload, 'sha256', 'application/json', block_size=1024)
+        self.assertEqual(h1, h2)

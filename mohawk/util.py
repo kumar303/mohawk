@@ -46,7 +46,7 @@ def random_string(length):
     return urlsafe_b64encode(os.urandom(length))[:length]
 
 
-def calculate_payload_hash(payload, algorithm, content_type):
+def calculate_payload_hash(payload, algorithm, content_type, block_size=1024):
     """Calculates a hash for a given payload."""
     p_hash = hashlib.new(algorithm)
 
@@ -58,9 +58,18 @@ def calculate_payload_hash(payload, algorithm, content_type):
 
     for i, p in enumerate(parts):
         # Make sure we are about to hash binary strings.
-        if not isinstance(p, six.binary_type):
+        if hasattr(p, "read"):
+            log.debug("part %i being handled as a file object", i)
+            while True:
+                block = p.read(block_size)
+                if not block:
+                    break
+                p_hash.update(block)
+        elif not isinstance(p, six.binary_type):
             p = p.encode('utf8')
-        p_hash.update(p)
+            p_hash.update(p)
+        else:
+            p_hash.update(p)
         parts[i] = p
 
     log.debug('calculating payload hash from:\n{parts}'
