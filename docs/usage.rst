@@ -84,7 +84,7 @@ with your request:
 Using the `requests`_ library just as an example, you would send your POST
 like this:
 
- .. doctest:: usage
+.. doctest:: usage
 
     >>> requests.post(url, data=content,
     ...               headers={'Authorization': sender.request_header,
