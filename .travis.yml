@@ -20,6 +20,8 @@ matrix:
           dist: xenial
         - python: "3.7"
           env: TOXENV=docs
+          sudo: required
+          dist: xenial
 install:
     - pip install tox
 script:
