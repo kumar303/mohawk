@@ -79,12 +79,12 @@ with your request:
 .. doctest:: usage
 
     >>> sender.request_header
-    u'Hawk mac="...", hash="...", id="some-sender", ts="...", nonce="..."'
+    'Hawk mac="...", hash="...", id="some-sender", ts="...", nonce="..."'
 
 Using the `requests`_ library just as an example, you would send your POST
 like this:
 
- .. doctest:: usage
+.. doctest:: usage
 
     >>> requests.post(url, data=content,
     ...               headers={'Authorization': sender.request_header,
@@ -172,7 +172,7 @@ This provides you with a similar Hawk header to use in the response:
 .. doctest:: usage
 
     >>> receiver.response_header
-    u'Hawk mac="...", hash="...="'
+    'Hawk mac="...", hash="...="'
 
 Using your web server's framework, respond with a
 ``Server-Authorization`` header. For example:
@@ -242,10 +242,9 @@ exception object to respond correctly like this:
     ...                         content=request['content'],
     ...                         content_type=request['headers']['Content-Type'])
     ... except TokenExpired as expiry:
-    ...     pass
-    >>> expiry.www_authenticate
-    'Hawk ts="...", tsm="...", error="token with UTC timestamp...has expired..."'
-    >>> response['headers']['WWW-Authenticate'] = expiry.www_authenticate
+    ...     response['headers']['WWW-Authenticate'] = expiry.www_authenticate
+    ...     print(expiry.www_authenticate)
+    Hawk ts="...", tsm="...", error="token with UTC timestamp...has expired..."
 
 .. doctest:: usage
     :hide:
@@ -378,7 +377,7 @@ Now you'll get an ``Authorization`` header without a ``hash`` attribute:
 .. doctest:: usage
 
     >>> sender.request_header
-    u'Hawk mac="...", id="some-sender", ts="...", nonce="..."'
+    'Hawk mac="...", id="some-sender", ts="...", nonce="..."'
 
 The :class:`mohawk.Receiver` must also be constructed to accept content
 without a declared hash using ``accept_untrusted_content=True``:

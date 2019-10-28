@@ -45,7 +45,7 @@ Installation
 
 Requirements:
 
-* Python 2.6+ or 3.4+
+* Python 2.7+ or 3.4+
 * `six`_
 
 Using `pip`_::
@@ -106,6 +106,7 @@ Changelog
 
 - **UNRELEASED**
 
+  - Dropped support for Python 2.6.
   - (Unreleased features should be listed here.)
 
 - **1.1.0** (2019-10-28)

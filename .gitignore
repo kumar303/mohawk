@@ -9,4 +9,6 @@ docs/_build/*
 *.mo
 *.db
 *.egg-info
+_virtualenv
+build
 dist
