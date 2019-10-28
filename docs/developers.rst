@@ -27,6 +27,12 @@ Using a `virtualenv`_ you can set yourself up for development like this::
     pip install -r requirements/dev.txt
     python setup.py develop
 
+..note::
+
+    The development commands such as building docs and publishing a release were
+    last tested on Python 3.7.4 so you will probably need a version close to that.
+    Use ``tox`` to develop features for older Python versions.
+
 Build the docs
 ==============
 
