@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='mohawk',
-      version='1.0.0',
+      version='1.1.0',
       description="Library for Hawk HTTP authorization",
       long_description="""
 Hawk lets two parties securely communicate with each other using

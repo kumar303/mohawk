@@ -106,9 +106,13 @@ Changelog
 
 - **UNRELEASED**
 
-  - Support passing file-like objects (supporting `.read(n)`) as the `content`
-    parameter for Resources.
   - (Unreleased features should be listed here.)
+
+- **1.1.0** (2019-10-28)
+
+  - Support passing file-like objects (those implementing ``.read(n)``)
+    as the ``content`` parameter for Resources.
+    See :class:`mohawk.Sender` for details.
 
 - **1.0.0** (2019-01-09)
 
