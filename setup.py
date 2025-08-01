@@ -18,7 +18,7 @@ Read more: https://github.com/kumar303/mohawk/
       """,
       author='Kumar McMillan, Austin King',
       author_email='kumar.mcmillan@gmail.com',
-      license='MPL 2.0 (Mozilla Public License)',
+      license='BSD-3-Clause',
       url='https://github.com/kumar303/mohawk',
       include_package_data=True,
       classifiers=[
